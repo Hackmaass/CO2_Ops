@@ -1,0 +1,71 @@
+{
+  "Comment": "CO2Ops automated fleet audit pipeline: scout underutilized instances, build Graviton rightsizing recommendations, publish findings.",
+  "StartAt": "ScoutFleet",
+  "States": {
+    "ScoutFleet": {
+      "Type": "Task",
+      "Resource": "${ScoutFunctionArn}",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "PipelineFailed"
+        }
+      ],
+      "Next": "HasCandidates?"
+    },
+    "HasCandidates?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.has_candidates",
+          "BooleanEquals": true,
+          "Next": "BuildRecommendations"
+        }
+      ],
+      "Default": "NoActionNeeded"
+    },
+    "BuildRecommendations": {
+      "Type": "Task",
+      "Resource": "${RecommendFunctionArn}",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "PipelineFailed"
+        }
+      ],
+      "Next": "PublishFindings"
+    },
+    "PublishFindings": {
+      "Type": "Task",
+      "Resource": "${NotifyFunctionArn}",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "PipelineFailed"
+        }
+      ],
+      "Next": "Done"
+    },
+    "NoActionNeeded": {
+      "Type": "Pass",
+      "Result": {
+        "summary": {"instance_count": 0, "total_estimated_monthly_savings_usd": 0, "total_estimated_monthly_carbon_savings_kg": 0},
+        "recommendations": [],
+        "notified": false
+      },
+      "ResultPath": "$.result",
+      "Next": "Done"
+    },
+    "Done": {
+      "Type": "Succeed"
+    },
+    "PipelineFailed": {
+      "Type": "Fail",
+      "Error": "AuditPipelineError",
+      "Cause": "One or more pipeline steps failed - check the failing Lambda's CloudWatch Logs for details."
+    }
+  }
+}

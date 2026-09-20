@@ -273,7 +273,34 @@ To replicate continuous telemetry collection:
 
 ---
 
-## 10. Automated One-Command Deployment
+## 10. Step 9: Automated Audit Pipeline (API Gateway, SQS, Step Functions, SNS)
+
+A second, asynchronous way to run a fleet audit, independent of the chat UI - see
+[`aws_lambda/audit_pipeline/README.md`](./aws_lambda/audit_pipeline/README.md) for
+the full design rationale. Deploys from the same SAM template as Step 8 above:
+
+```bash
+cd aws_lambda
+sam build
+sam deploy --guided
+```
+
+This provisions, in addition to the daily snapshot Lambda:
+- An **API Gateway** REST API (`POST /audit`, `GET /audit/{job_id}`) gated by an
+  API Gateway-managed API key + usage plan.
+- An **SQS** queue (with a dead-letter queue) decoupling ingestion from processing.
+- A **Step Functions** state machine (`CO2OpsAuditPipeline`) orchestrating three
+  Lambda tasks: scout the fleet, build Graviton recommendations, publish findings.
+- An **SNS** topic (`co2ops-audit-alerts`) - subscribe an email endpoint to it to
+  see results land live.
+
+After deploying, retrieve the API's URL, API key, and the SNS topic ARN from the
+stack's Outputs (`AuditApiUrl`, `AuditApiId`, `AuditAlertsTopicArn`) - the
+pipeline's own README has the exact `aws cloudformation`/`aws apigateway` commands.
+
+---
+
+## 11. Automated One-Command Deployment
 
 We provide automated deployment scripts that build and push both containers to Amazon ECR and configure S3:
 
@@ -289,7 +316,7 @@ We provide automated deployment scripts that build and push both containers to A
 
 ---
 
-## 11. Verification & Cutover Checklist
+## 12. Verification & Cutover Checklist
 
 - [ ] Verify backend health: `GET https://<app-runner-url>/` (public, no API key needed)
 - [ ] Verify auth is actually enforced: `POST /run` **without** an `X-API-Key` header should return `401` (or `503` if `CO2OPS_API_KEY` isn't set at all — fix that first)
@@ -300,3 +327,6 @@ We provide automated deployment scripts that build and push both containers to A
 - [ ] Confirm `@optimization_advisor` returns recommendations
 - [ ] Test safe execution workflow with test EC2 instance
 - [ ] Confirm executive summary uploaded to S3 bucket `co2ops-aws-reports`
+- [ ] `POST {AuditApiUrl}/audit` with `x-api-key` returns `202` and a `job_id`
+- [ ] `GET {AuditApiUrl}/audit/{job_id}` reaches `SUCCEEDED` within ~10 seconds and includes recommendations
+- [ ] Subscribed SNS endpoint actually received the results email

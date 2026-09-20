@@ -260,6 +260,8 @@ cd aws_lambda
 sam build && sam deploy --guided
 ```
 
+```
+`test_aws_executor.py` covers the code-enforced safety gate directly, including the `blocked` and `force=True` override paths. `test_sagemaker_forecaster.py` covers the SageMaker-with-ARIMA-fallback logic in `forecaster_agent.py`. `test_audit_pipeline.py` covers the serverless audit pipeline (`aws_lambda/audit_pipeline/`) end to end with every boto3 call mocked, so it runs with no AWS credentials needed.
 ---
 
 ## Environment Variables
