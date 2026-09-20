@@ -83,15 +83,16 @@ $EcrRegistry = "$AccountId.dkr.ecr.$AwsRegion.amazonaws.com"
 
 # 2. Authenticate Docker to Amazon ECR
 Write-Host "`n[2/7] Logging in to Amazon ECR ($EcrRegistry)..." -ForegroundColor Yellow
-aws ecr get-login-password --region $AwsRegion | docker login --username AWS --password-stdin $EcrRegistry
+$EcrPass = aws ecr get-login-password --region $AwsRegion
+docker login -u AWS -p $EcrPass $EcrRegistry
 
 # 3. Create ECR Repositories if not exist
 Write-Host "`n[3/7] Ensuring ECR repositories exist..." -ForegroundColor Yellow
 foreach ($repo in @($BackendRepo, $FrontendRepo)) {
-    try {
-        aws ecr describe-repositories --repository-names $repo --region $AwsRegion | Out-Null
+    $repoCheck = aws ecr describe-repositories --repository-names $repo --region $AwsRegion 2>&1
+    if ($LASTEXITCODE -eq 0) {
         Write-Host "Repository '$repo' exists." -ForegroundColor DarkGray
-    } catch {
+    } else {
         Write-Host "Creating repository '$repo'..." -ForegroundColor Cyan
         aws ecr create-repository --repository-name $repo --region $AwsRegion | Out-Null
     }
