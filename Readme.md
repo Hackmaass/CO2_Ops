@@ -4,17 +4,17 @@
 ### Autonomous Cloud Sustainability & FinOps Platform for AWS
 
 [![AWS Native](https://img.shields.io/badge/Cloud-Amazon%20Web%20Services-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![Multi-Agent Bedrock](https://img.shields.io/badge/Multi--Agent-AWS%20Bedrock%20Converse%20API-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/bedrock/)
-[![Claude Sonnet](https://img.shields.io/badge/Foundation%20Model-Claude%203.5%20Sonnet%20%7C%204.6-D97706?style=for-the-badge&logo=anthropic&logoColor=white)](https://aws.amazon.com/bedrock/claude/)
+[![Multi-Agent ADK](https://img.shields.io/badge/Multi--Agent-Google%20ADK-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://google.github.io/adk-docs/)
+[![Gemini](https://img.shields.io/badge/Foundation%20Model-Gemini%202.5%20Flash-D97706?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/gemini-api)
 [![Python Version](https://img.shields.io/badge/Python-3.12%20%7C%203.13%20%7C%203.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Test Suite](https://img.shields.io/badge/Tests-194%20Passing%20(100%25)-10B981?style=for-the-badge&logo=pytest&logoColor=white)](./tests)
-[![Deterministic Safety](https://img.shields.io/badge/Safety%20Engine-7--Day%20ARIMA%20Gated-0284C7?style=for-the-badge&logo=shield&logoColor=white)](#-mathematical-safety-the-6-deterministic-safety-gates)
+[![Test Suite](https://img.shields.io/badge/Tests-52%20Passing%20(100%25)-10B981?style=for-the-badge&logo=pytest&logoColor=white)](./tests)
+[![Deterministic Safety](https://img.shields.io/badge/Safety%20Engine-7--Day%20ARIMA%20Gated-0284C7?style=for-the-badge&logo=shield&logoColor=white)](#-mathematical-safety-the-code-enforced-safety-gate)
 [![Mixpanel Aesthetic](https://img.shields.io/badge/UI%20Design-Mixpanel%20Editorial-7856FF?style=for-the-badge&logo=framer&logoColor=white)](https://mixpanel.com)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](./LICENSE)
 
 <p align="center">
-  <b>Eliminate AWS cloud waste and slash compute carbon emissions with mathematical safety guarantees.</b><br />
-  An autonomous multi-agent engineering swarm that continuously discovers, profiles, forecasts, and rightsizes AWS EC2 fleets using Amazon Bedrock, CloudWatch telemetry, and statsmodels ARIMA time-series models.
+  <b>Eliminate AWS cloud waste and slash compute carbon emissions with a code-enforced safety gate.</b><br />
+  An autonomous multi-agent engineering swarm — built on Google's Agent Development Kit (ADK) and Gemini — that continuously discovers, profiles, forecasts, and rightsizes AWS EC2 fleets using CloudWatch telemetry and statsmodels ARIMA time-series models.
 </p>
 
 [🚀 Explore Landing Page](http://127.0.0.1:8501/) • [💬 Launch Workspace](http://127.0.0.1:8501/workspace.html) • [📖 AWS Deployment Guide](./AWS_DEPLOYMENT_PLAN.md) • [🤝 Contributing & Status Matrix](./contributions.md) • [🔌 API Swagger Docs](http://127.0.0.1:8080/docs)
@@ -26,21 +26,20 @@
 ## 📑 Table of Contents
 - [Executive Overview](#-executive-overview)
 - [How Things Work: End-to-End Operational Lifecycle](#-how-things-work-end-to-end-operational-lifecycle)
-- [AWS Model Orchestration Deep Dive](#-aws-model-orchestration-deep-dive)
-  - [1. Native Bedrock Converse API Architecture](#1-native-bedrock-converse-api-architecture)
-  - [2. Dynamic Tool Introspection Engine](#2-dynamic-tool-introspection-engine)
-  - [3. Autonomous Multi-Turn Tool Execution Loop](#3-autonomous-multi-turn-tool-execution-loop)
-  - [4. Shared State Architecture (`CO2OpsState`)](#4-shared-state-architecture-co2opsstate)
-  - [5. Orchestrator Routing & Sequential Pipelines](#5-orchestrator-routing--sequential-pipelines)
-  - [6. Read-Only E2E Architecture Guard](#6-read-only-e2e-architecture-guard)
+- [Agent Orchestration Deep Dive](#-agent-orchestration-deep-dive)
+  - [1. Google ADK Agent Architecture](#1-google-adk-agent-architecture)
+  - [2. Tool Calling](#2-tool-calling)
+  - [3. Delegation & Sequential Pipelines](#3-delegation--sequential-pipelines)
+  - [4. Session State](#4-session-state)
+  - [5. Backend Authentication](#5-backend-authentication)
 - [System Architecture](#-system-architecture)
 - [Autonomous Multi-Agent Swarm](#-autonomous-multi-agent-swarm)
-- [Mathematical Safety: The 6 Deterministic Safety Gates](#-mathematical-safety-the-6-deterministic-safety-gates)
+- [Mathematical Safety: The Code-Enforced Safety Gate](#-mathematical-safety-the-code-enforced-safety-gate)
 - [FinOps & Regional Carbon Abatement Engine](#-finops--regional-carbon-abatement-engine)
 - [Dual-Surface Frontend: Mixpanel Editorial Aesthetic](#-dual-surface-frontend-mixpanel-editorial-aesthetic)
 - [FastAPI REST Backend & Session Store](#-fastapi-rest-backend--session-store)
 - [Local Quick Start](#-local-quick-start)
-- [Automated Verification Suite (145 Passing Tests)](#-automated-verification-suite-145-passing-tests)
+- [Automated Verification Suite (52 Passing Tests)](#-automated-verification-suite-52-passing-tests)
 - [AWS Cloud Production Deployment](#-aws-cloud-production-deployment)
 - [Current Project Status & Roadmap](#-current-project-status--roadmap)
 - [Repository Directory Structure](#-repository-directory-structure)
@@ -59,12 +58,14 @@ Modern cloud infrastructure is plagued by chronic over-provisioning. Engineering
 
 <div align="center">
 
-| Core Metric | Performance | Architectural Mechanism |
-|---|:---:|---|
-| **Cloud Waste Reduction** | **-72.4%** | Fleet scouting via DuckDB & automated migration to high-efficiency AWS Graviton targets. |
-| **Carbon Abatement** | **1,420 kg/mo** | Dynamic regional grid emission accounting (EPA eGRID & Climatiq Compute API). |
-| **Audit & Decision Speed** | **< 15 sec** | Coordinated multi-agent reasoning on Amazon Bedrock Converse API with Claude. |
-| **Production Safety** | **100% Gated** | 6-part deterministic statistical gate (ARIMA P95, peak, volatility, & average limits). |
+| Core Mechanism | How It Works |
+|---|---|
+| **Cloud Waste Reduction** | Fleet scouting via DuckDB & automated migration to high-efficiency AWS Graviton targets. |
+| **Carbon Abatement** | Dynamic regional grid emission accounting (EPA eGRID & Climatiq Compute API). |
+| **Audit & Decision Speed** | Multi-agent reasoning via Google ADK, powered by Gemini. |
+| **Production Safety** | Code-enforced average-utilization gate, re-checked at execution time independent of what the LLM believes it already verified. |
+
+*The specific dollar/carbon figures in the [Compute Comparison Matrix](#-finops--regional-carbon-abatement-engine) below are worked examples for a handful of instance-type swaps, not a measured fleet-wide benchmark — actual savings depend on your workload and region.*
 
 </div>
 
@@ -81,8 +82,8 @@ The diagram below outlines the seven-phase lifecycle executed when CO2Ops evalua
              │
              ▼
 [ 4. Impact Calculator ] ──> [ 5. Deterministic Safety ] ──> [ 6. Safe Executor ]
-  • AWS Pricing API             • 6-Gate Statistical Rule      • Boto3 Waiters State Mach.
-  • Climatiq Grid Factors       • FAIL-CLOSED Enforcement     • Automatic Rollback
+  • AWS Pricing API             • Avg CPU/Mem Threshold Rule    • Boto3 Waiters State Mach.
+  • Climatiq Grid Factors       • Code-Enforced (not prompt)    • Stop → Modify → Start
              │
              ▼
 [ 7. Executive Reporting ]
@@ -92,36 +93,35 @@ The diagram below outlines the seven-phase lifecycle executed when CO2Ops evalua
 
 ### Detailed Operational Flow:
 
-1. **Multi-Region Fleet Discovery & Telemetry Scouting (`@optimization_advisor`)**:
-   - Queries Amazon EC2 across active regions (`us-east-1`, `us-west-2`, `eu-west-1`, `ap-south-1`) via `boto3.client('ec2').describe_instances()`.
-   - Ingests 14-day historical telemetry from Amazon CloudWatch (`boto3.client('cloudwatch').get_metric_statistics()`), sampling CPU, memory, disk IOPS, and network throughput.
-   - Stamps telemetry records with strict provenance metadata (`provenance: 'verified_live'` vs `'demo'`).
-   - Loads fleet metadata into an embedded DuckDB in-memory database for ultra-fast SQL aggregation.
+1. **Fleet Discovery (`@optimization_advisor` → `infra_scout_agent`)**:
+   - Starts from a built-in benchmark dataset of example EC2 instances (for a working demo without any AWS account).
+   - Optionally appends any real running instances found via `boto3.client('ec2').describe_instances()` if AWS credentials are configured — these currently get placeholder utilization figures rather than live CloudWatch metrics at this stage (see step 3 for where CloudWatch data actually gets pulled, per-instance, during forecasting).
+   - Loads the combined fleet into an embedded DuckDB in-memory database for SQL-style filtering and aggregation.
 
 2. **Workload Profiling & Graviton Rightsizing Engine (`@workload_profiler` + `@recommender`)**:
    - Filters for underutilized instances (e.g., $CPU_{avg} < 20\%$, $Mem_{avg} < 35\%$).
    - Evaluates CPU architectures (`x86_64` vs `arm64`) and maps legacy x86 instances (`m5`, `c5`, `r5`, `t3`) to optimal AWS Graviton targets (`m6g`, `c6g`, `r6g`, `t4g`), providing up to $40\%$ price-performance improvement and $60\%$ reduced wattage.
 
-3. **7-Day Statistical Time-Series Forecasting (`@forecaster`)**:
-   - Evaluates historical telemetry trends using a univariate autoregressive integrated moving average model ($\text{ARIMA}(1,0,0)$).
-   - Generates a projected 7-day hourly trajectory with mean expectation, peak boundaries, P95 percentiles, and workload volatility ($\sigma$).
+3. **7-Day Time-Series Forecasting (`@forecaster`)**:
+   - Tries an Amazon SageMaker AI endpoint first (`invoke_sagemaker_forecast`, active when `SAGEMAKER_ENDPOINT_NAME` is set) — see [`co2ops_agent/sagemaker_model/`](./co2ops_agent/sagemaker_model/) for the deployable inference handler.
+   - Falls back automatically to a local `statsmodels` ARIMA(1,0,0) model if SageMaker is unset or the call fails, and reports which `engine` actually produced the result either way.
+   - Generates a projected 7-day daily forecast for CPU and memory utilization, falling back further to a deterministic (instance-ID-seeded) synthetic baseline when live CloudWatch history isn't available.
 
 4. **FinOps & Climatiq Carbon Calculation (`@impact_calculator`)**:
    - Queries current AWS on-demand pricing rates for both original and candidate instances.
    - Calculates the net reduction in electrical wattage ($W_{current} - W_{target}$) and models regional grid carbon intensity ($kg CO_2e / kWh$) using EPA eGRID, EEA, and the Climatiq AWS Compute API.
    - Produces exact projected dollar savings ($\$/\text{mo}$) and carbon abatement ($kg CO_2e/\text{mo}$).
 
-5. **Deterministic Mathematical Safety Gating (`@safe_executor / safety_agent`)**:
-   - Evaluates the 7-day forecasted utilization against 6 hard mathematical boundaries.
-   - If projected P95 CPU exceeds $45\%$, peak CPU exceeds $70\%$, volatility exceeds $15\%$, or telemetry is missing/synthetic, the migration is immediately **BLOCKED**.
-   - Claude and LLM reasoning **cannot bypass** this gate.
+5. **Deterministic Safety Gating (`@safe_executor`)**:
+   - Evaluates the 7-day forecasted utilization against a simple, explicit rule: average CPU must be $< 30\%$ and average memory must be $< 40\%$ across the forecast window.
+   - This check runs **twice**: once as agent guidance, and again *inside* `change_machine_type` itself, so a migration is **BLOCKED** even if the LLM's own reasoning is skipped, wrong, or manipulated. The code-level check is the one that actually matters.
+   - An explicit `force=True` override exists for cases where a human has manually confirmed the risk.
 
-6. **Hardened Rightsizing Execution & Zero-Downtime Rollback (`@safe_executor / executor_agent`)**:
-   - Verifies pre-flight architecture compatibility (prevents invalid cross-architecture mutations).
+6. **Rightsizing Execution (`@safe_executor`)**:
    - Coordinates the 3-phase EC2 modification lifecycle:
      $$\text{Stop Instance} \longrightarrow \text{Modify Instance Attribute} \longrightarrow \text{Restart Instance}$$
-   - Uses AWS boto3 waiters (`instance_stopped`, `instance_running`) with strict timeouts.
-   - **Automated Rollback**: If `modify_instance_attribute` or instance restart fails, the executor automatically restores the instance to its original state and verifies its health.
+   - Uses AWS boto3 waiters (`instance_stopped`, `instance_running`) with timeouts.
+   - **Known gap, not yet implemented**: there is currently no automatic rollback if `modify_instance_attribute` or the restart fails mid-lifecycle — an exception anywhere in that sequence is caught and reported back as a `"simulated"` result rather than a distinct hard failure. Treat any live execution against real infrastructure with that in mind until real rollback/error-surfacing is added.
 
 7. **Executive Reporting & Presentation Decks (`@summary_generator`)**:
    - Compiles findings into an executive markdown briefing.
@@ -130,9 +130,9 @@ The diagram below outlines the seven-phase lifecycle executed when CO2Ops evalua
 
 ---
 
-## 🧠 AWS Model Orchestration Deep Dive
+## 🧠 Agent Orchestration Deep Dive
 
-CO2Ops replaces legacy proprietary agent frameworks with a **100% native Amazon Bedrock Converse API architecture**.
+CO2Ops is built on **Google's Agent Development Kit (ADK)**, using Gemini as the foundation model for every agent.
 
 ```
                            +-------------------------------------+
@@ -141,99 +141,45 @@ CO2Ops replaces legacy proprietary agent frameworks with a **100% native Amazon 
                                               |
                                               v
                            +-------------------------------------+
-                           |         BedrockOrchestrator         |
-                           |       (Intent & Route Engine)       |
+                           |         co2ops_agent (root)          |
+                           |    ADK Agent, model=Gemini            |
                            +------------------+------------------+
                                               |
-                     +------------------------+------------------------+
-                     |                                                 |
-                     v                                                 v
-       +----------------------------+                    +----------------------------+
-       |       BedrockAgent         |                    |      BedrockPipeline       |
-       |  (Single Specialized Turn) |                    |  (Sequential Multi-Agent)  |
-       +--------------+-------------+                    +--------------+-------------+
-                      |                                                 |
-                      +-----------------------+-------------------------+
+                     LLM decides which sub_agent the request needs
                                               |
-                                              v
-                           +-------------------------------------+
-                           |      Bedrock Converse API Call      |
-                           |   (Claude 3.5 Sonnet / Claude 4.6)  |
-                           +------------------+------------------+
-                                              |
-                        +---------------------+---------------------+
-                        | stopReason == "tool_use"                  | stopReason == "end_turn"
-                        v                                           v
-       +---------------------------------+        +---------------------------------+
-       |  Dynamic Tool Dispatch Engine   |        |   Extract Model Response Text   |
-       |  • python_func_to_bedrock_tools |        |   Update CO2OpsState Fields     |
-       |  • Inject CO2OpsState Context   |        +----------------+----------------+
-       |  • Execute Python / Boto3 Tool  |                         |
-       +----------------+----------------+                         v
-                        |                         +---------------------------------+
-                        +────────────────────────>│ Return Updated State to API/UI  │
-                          Pass toolResult back    +---------------------------------+
-                          to Converse Loop
+          +-------------------+--------------+---------------+-------------------+
+          |                   |                               |                   |
+          v                   v                               v                   v
++-------------------+ +-------------------+          +-------------------+ +-------------------+
+| OptimizationAdvisor| | forecasting_tool  |          | safe_executor      | | summary_generator |
+| (SequentialAgent:  | | _agent (LlmAgent) |          | _agent (LlmAgent)  | | _agent (LlmAgent) |
+|  scout→profiler→   | |                    |          |                    | |                    |
+|  recommender)      | |                    |          |                    | |                    |
++---------+----------+ +---------+----------+          +---------+----------+ +---------+----------+
+          |                     |                                |                     |
+          v                     v                                v                     v
+   Python functions passed directly as `tools=[...]` - ADK builds the function-calling
+   schema from each function's type hints and docstring, and executes the matching
+   Python function whenever Gemini requests a tool call.
 ```
 
-### 1. Native Bedrock Converse API Architecture
-- Wrapped inside [`co2ops_agent/bedrock/client.py`](file:///d:/Projects/CO2Ops/co2ops_agent/bedrock/client.py) (`BedrockModelClient`).
-- Authenticates securely via standard AWS IAM credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, or IAM instance profile / ECS task role). Never hardcodes credentials.
-- Defaults to Anthropic Claude models on Amazon Bedrock (`anthropic.claude-sonnet-4-6` or `us.anthropic.claude-3-5-sonnet-20241022-v2:0`).
-- Provides configurable inference parameters (`temperature: 0.2`, `maxTokens: 2048`, `topP: 0.9`).
+### 1. Google ADK Agent Architecture
+- The root agent ([`co2ops_agent/agent.py`](./co2ops_agent/agent.py)) is a plain `google.adk.agents.Agent`, configured with `model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash")`.
+- Authenticates to Google via `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), resolved through [`secrets_access_manager.py`](./co2ops_agent/secrets_access_manager.py) — env var first, AWS Secrets Manager / SSM as fallback. Never hardcodes credentials.
+- `optimization_advisor_agent` is a `SequentialAgent` (a fixed three-step pipeline); every other sub-agent is an `LlmAgent` (a single agent that reasons and calls its own tools in a loop).
 
-### 2. Dynamic Tool Introspection Engine
-In [`co2ops_agent/bedrock/agent.py`](file:///d:/Projects/CO2Ops/co2ops_agent/bedrock/agent.py), `python_func_to_bedrock_tool_spec()` uses Python's runtime `inspect` module to dynamically build valid Amazon Bedrock `toolSpec` schemas directly from native Python functions:
-- Extracts function names and first-line docstrings as tool descriptions.
-- Inspects parameter type annotations (`str`, `int`, `float`, `bool`, `list`, `dict`) and generates corresponding JSON Schema properties.
-- Automatically handles required vs optional parameters based on default values.
-- Seamlessly excludes runtime state injection parameters (`state`, `tool_context`) from the model-facing schema.
+### 2. Tool Calling
+Every tool is just a plain, type-hinted Python function passed straight into an agent's `tools=[...]` list (see [`safe_executor_agent/agent.py`](./co2ops_agent/agents/safe_executor_agent/agent.py) for an example) — ADK generates the model-facing function-calling schema from the function's signature and docstring automatically, and dispatches Gemini's tool-call requests back to that same Python function. There's no hand-rolled schema builder in this codebase; that part is entirely ADK's.
 
-### 3. Autonomous Multi-Turn Tool Execution Loop
-When Claude decides to invoke one or more tools:
-1. Bedrock returns `stopReason: "tool_use"` with tool names and arguments in `output.message.content`.
-2. `BedrockAgent.run()` intercepts the tool call, matches the tool name in its registered tool map, and injects `CO2OpsState` if required by the function signature.
-3. The tool executes (e.g., querying CloudWatch or calculating Climatiq emissions), and its result is packaged into a Bedrock `toolResult` block:
-   ```json
-   {
-     "toolResult": {
-       "toolUseId": "tooluse_xyz123",
-       "content": [{"json": { "status": "success", "p95_cpu": 18.4 }}],
-       "status": "success"
-     }
-   }
-   ```
-4. The agent sends the `toolResult` back to Bedrock Converse API in the conversation message history.
-5. Bedrock processes the tool output and can either trigger additional tools or synthesize its final analysis (`stopReason: "end_turn"`). The loop handles up to 5 consecutive tool turns safely.
+### 3. Delegation & Sequential Pipelines
+- **Root-level delegation**: the root agent's instruction prompt tells it which `sub_agent` handles which kind of request (e.g. "migrate" / "resize" → `safe_executor_agent`); ADK's built-in agent-transfer mechanism does the actual handoff.
+- **`OptimizationAdvisor` pipeline**: a `SequentialAgent` that always runs `infra_scout_agent` → `workload_profiler_agent` → `infra_recommender_agent` in order.
 
-### 4. Shared State Architecture (`CO2OpsState`)
-All agents communicate through an explicit, strongly-typed execution container: [`CO2OpsState`](file:///d:/Projects/CO2Ops/co2ops_agent/bedrock/state.py).
-- **Stage 1**: `infra_data` (discovered fleet instances, telemetry metrics, provenance tags).
-- **Stage 2**: `analysis_results` & `final_recommendations` (Graviton rightsizing proposals).
-- **Stage 3**: `forecast_data` (7-day ARIMA series, confidence bands, volatility metrics).
-- **Stage 4**: `impact_analysis` (dollar savings, kWh reductions, kg $CO_2e$ abated).
-- **Stage 5**: `safety_eval` (deterministic gate decision `ALLOW` or `BLOCK`, failure rationale).
-- **Stage 6**: `execution_result` (boto3 lifecycle logs, original/target types, verification state).
-- **Stage 7**: `report_metadata` & `chart_links` (S3 presigned URLs, slide deck paths).
+### 4. Session State
+Agents pass data forward with ADK's own `output_key` + `{state_key}` templating: each agent writes its result under an `output_key` (e.g. `infra_scout_agent` writes `infra_data`), and the next agent's instruction references it directly (e.g. `workload_profiler_agent`'s prompt reads `{infra_data}`). Session state itself is created and persisted through ADK's session service — see [FastAPI REST Backend & Session Store](#-fastapi-rest-backend--session-store) below for the actual endpoints the frontend calls.
 
-### 5. Orchestrator Routing & Sequential Pipelines
-The root coordinator [`BedrockOrchestrator`](file:///d:/Projects/CO2Ops/co2ops_agent/bedrock/orchestrator.py) manages intent routing:
-- **Keyword & Intent Routing**: Routes user prompts to specialized agents or multi-agent pipelines:
-  - `"audit"`, `"scout"`, `"idle"`, `"optimize"` $\to$ `OptimizationAdvisor` Pipeline (`infra_scout` $\to$ `workload_profiler` $\to$ `recommender`).
-  - `"forecast"`, `"predict"`, `"arima"` $\to$ `forecasting_tool_agent`.
-  - `"compare"`, `"impact"`, `"price"`, `"carbon"` $\to$ `impact_calculator_agent`.
-  - `"migrate"`, `"resize"`, `"execute"` $\to$ `SafeExecutor` Pipeline (`safety_agent` $\to$ `executor_agent`).
-  - `"report"`, `"summary"`, `"slides"` $\to$ `summary_generator_agent`.
-- **BedrockPipeline**: Chains agents sequentially, threading the same `CO2OpsState` instance so downstream agents consume outputs from upstream agents without loss of context.
-
-### 6. Read-Only E2E Architecture Guard
-To validate live AWS connectivity safely, CO2Ops includes a dedicated, non-mutating validation runner: [`co2ops_agent/e2e_readonly.py`](file:///d:/Projects/CO2Ops/co2ops_agent/e2e_readonly.py).
-- Sets `CO2OPS_READ_ONLY_MODE=true` in the execution environment.
-- Queries real running EC2 instances via `ec2.describe_instances()`.
-- Fetches real CloudWatch metric statistics via `cloudwatch.get_metric_statistics()`.
-- Validates model inference readiness on Amazon Bedrock.
-- Evaluates the 7-day ARIMA forecast and deterministic safety gate.
-- **Enforces Zero Mutation**: The executor explicitly halts before modifying any AWS resources, guaranteeing complete safety during live verification audits.
+### 5. Backend Authentication
+The raw ADK dev server (`adk api_server`) ships unauthenticated by design — [ADK's own docs](https://google.github.io/adk-docs/) say to put it behind your own auth layer before exposing it beyond a trusted network. Because this agent can stop/resize/restart real EC2 instances, [`co2ops_agent/server.py`](./co2ops_agent/server.py) wraps the ADK app in a small FastAPI middleware that requires a shared-secret `X-API-Key` header on every request and fails closed (503) if `CO2OPS_API_KEY` isn't configured at all.
 
 ---
 
@@ -262,8 +208,8 @@ To validate live AWS connectivity safely, CO2Ops includes a dedicated, non-mutat
                                                       |
                                                       v
                                   +---------------------------------------+
-                                  |       Bedrock Root Orchestrator       |
-                                  |     (Intent Router & State Coord.)    |
+                                  |        co2ops_agent (ADK root)        |
+                                  |   Gemini-backed, delegates to subagents|
                                   +-------------------+-------------------+
                                                       |
           +--------------------+----------------------+-----------------------+--------------------+
@@ -291,41 +237,43 @@ CO2Ops organizes its intelligence into decoupled, highly specialized sub-agents:
 | Symbol | Sub-Agent | Primary Function | AWS & Tool Stack |
 |:---:|---|---|---|
 | ⚡ | **`@optimization_advisor`** | Fleet discovery, idle instance detection, and Graviton rightsizing profiling. | DuckDB SQL, `ec2.describe_instances()`. |
-| 📈 | **`@forecasting_tool`** | Evaluates workload history to produce 7-day statistical projections for CPU and memory. | Python `statsmodels` $\text{ARIMA}(1,0,0)$, Amazon CloudWatch. |
+| 📈 | **`@forecasting_tool`** | Evaluates workload history to produce 7-day projections for CPU and memory. | Amazon SageMaker AI endpoint (if `SAGEMAKER_ENDPOINT_NAME` is set), with automatic local `statsmodels` ARIMA(1,0,0) fallback. |
 | 🌍 | **`@impact_calculator`** | Computes exact delta in hourly cost ($\$/\text{hr}$) and carbon emissions ($kg CO_2e/\text{mo}$). | AWS Pricing API, Climatiq AWS Compute Models. |
-| 🛡️ | **`@safe_executor`** | 6-gate deterministic safety engine and zero-downtime EC2 resize state machine. | `boto3.client('ec2')` (`stop` $\to$ `modify` $\to$ `start`). |
+| 🛡️ | **`@safe_executor`** | Code-enforced average-utilization safety gate and EC2 resize state machine. | `boto3.client('ec2')` (`stop` $\to$ `modify` $\to$ `start`). |
 | 📊 | **`@summary_generator`** | Compiles executive sustainability briefings and generates 16:9 PowerPoint decks. | `python-pptx`, Matplotlib analytics, Amazon S3. |
 
 ---
 
-## 📐 Mathematical Safety: The 6 Deterministic Safety Gates
+## 📐 Mathematical Safety: The Code-Enforced Safety Gate
 
-Before any infrastructure modification is authorized, CO2Ops passes the workload telemetry through an automated mathematical safety gate:
+Before any infrastructure modification is authorized, CO2Ops checks the workload's 7-day forecasted utilization against one explicit rule:
 
-$$CPU_{\text{projected}}(t) = \mu + \phi_1 (CPU_{t-1} - \mu) + \epsilon_t$$
+$$CPU_{\text{projected}}(t) = \mu + \phi_1 (CPU_{t-1} - \mu) + \epsilon_t \quad\text{(ARIMA(1,0,0), the model behind the 7-day forecast)}$$
 
-### The 6 Deterministic Safety Gates:
+### The Rule
 
-| Safety Gate Check | Threshold Limit | Rationale / Failure Consequence |
+| Check | Threshold | Rationale |
 |---|:---:|---|
-| **1. Peak CPU Utilization** | **$< 70.0\%$** | Prevents unexpected spikes from exhausting core capacity. |
-| **2. Peak Memory Utilization** | **$< 70.0\%$** | Prevents Out-Of-Memory (OOM) kernel kills on target nodes. |
-| **3. P95 CPU Utilization** | **$< 45.0\%$** | Ensures high sustained load periods have adequate headroom. |
-| **4. P95 Memory Utilization** | **$< 45.0\%$** | Prevents paging and swap thrashing under normal peak load. |
-| **5. Workload Volatility ($\sigma$)** | **$< 15.0\%$** | Rejects erratic, bursty, or unpredictable workloads. |
-| **6. Average CPU & Memory** | **$CPU < 30\%$, $Mem < 40\%$** | Guarantees the instance is genuinely underutilized. |
+| **Average forecasted CPU** | **$< 30.0\%$** | Guarantees the instance is genuinely underutilized before resizing it down. |
+| **Average forecasted Memory** | **$< 40.0\%$** | Same guarantee for memory headroom. |
 
-### Strict Fail-Closed Safeguards:
-- **Telemetry Verification**: Refuses migration if CloudWatch telemetry has $<5$ valid numeric datapoints.
-- **No Synthetic Fallback Mutation**: Blocks rightsizing if data provenance is marked `demo`, `synthetic`, or `fallback`.
-- **No-State Bypass Protection**: Fails closed immediately (`blocked_no_safety_context`) if `CO2OpsState` is omitted or `None`, preventing agents or users from bypassing safety gates.
-- **Architecture Cross-Check**: Blocks direct $x86\_64 \to arm64$ (Graviton) mutations without an AMI rebuild to prevent kernel panic boot loops.
-- **Rollback & Diagnostics**: Automatically restores the original running state if AWS modification fails, logging explicit `rollback_status` (`rollback_succeeded` vs `rollback_failed`) and `rollback_error`.
+It's intentionally simple — a single average-utilization rule — but it's enforced **twice**, and the second time is what actually matters:
+- **Agent guidance**: the `safe_executor_agent`'s prompt tells it to call `is_safe_to_migrate()` before acting.
+- **Code enforcement**: `change_machine_type()` re-runs that same check itself, independent of what the LLM did or claims to have done, and returns `status: "blocked"` if it fails. An explicit `force=True` is required to skip this, meant for a human who has already reviewed and accepted the risk.
+
+This means a prompt-injected, confused, or simply wrong LLM call still can't push through an unsafe resize — the gate lives in code, not in the prompt.
+
+### Known Gaps (Honest Accounting)
+A few things worth knowing before relying on this against real infrastructure:
+- **No peak, P95, or volatility check** — only the two averages above. A workload that's calm 90% of the time but spikes hard could still pass.
+- **No rollback on partial failure** — if the instance is stopped and the resize or restart then fails, the code currently reports a `"simulated"` result rather than attempting to restore the original instance type or surfacing a hard error.
+- **Missing telemetry silently gets a synthetic substitute, not a refusal** — if CloudWatch has too little history, the forecaster fills in a deterministic (instance-ID-seeded) synthetic baseline and proceeds, rather than blocking the migration. This is reasonable for demo purposes but means "the gate passed" doesn't always mean "we saw real utilization data."
 
 ```text
 [SAFETY GATE: BLOCKED]
-Instance i-01a2b3c4 projected peak CPU is 74.2% (> 70.0% ceiling).
-Action halted: Target instance cannot guarantee safe production headroom.
+Migration of i-01a2b3c4 to t3.medium was blocked: forecasted CPU/Memory
+utilization is too high to safely resize right now.
+Re-run with force=True only if you have manually confirmed this is safe.
 ```
 
 ---
@@ -356,37 +304,41 @@ $$E = P_{\text{kW}} \times t_{\text{hours}} \times CI_{\text{regional}}$$
 
 ## 🎨 Dual-Surface Frontend: Mixpanel Editorial Aesthetic
 
-The web experience provides two cohesive interfaces built using Mixpanel's design system:
+> **Note on what actually runs where:** `Frontend/Dockerfile` builds and runs the **Streamlit app** (`app.py`) only — `docker compose up` gives you that, not the static pages below. `index.html` and `workspace.html` still exist and still work, but today you'd serve them yourself (e.g. `python -m http.server` from `Frontend/`, after creating `env.js` from `env.js.template` — see [Local Quick Start](#-local-quick-start)) or wire them into your own S3+CloudFront setup per [`AWS_DEPLOYMENT_PLAN.md`](./AWS_DEPLOYMENT_PLAN.md). Restoring these to the Docker image is a good, contained follow-up task.
+
+The web experience is designed around two cohesive interfaces built using Mixpanel's design system:
 
 ### 1. Mixpanel-Inspired Editorial Landing Page
-Accessible at `http://127.0.0.1:8501/` ([`Frontend/index.html`](file:///d:/Projects/CO2Ops/Frontend/index.html)):
+`Frontend/index.html`:
 - **Typography**: Embedded offline `Garnett Medium`, `Garnett Regular`, and `ABC Arizona Text Light Italic` font assets.
 - **Color Palette**: Warm luxury cream `#FAF9F5` canvas, pure white `#FFFFFF` cards, deep charcoal `#1F2023`, signature violet `#7856FF`, mint green `#EBF6F1`, and coral `#FAF0ED`.
 - **Interactive Showcase**: Embedded analytics console window featuring multi-series EC2 telemetry curves, query builder tags, and a floating **Root Cause Analysis Agent** popup card.
-- **Enterprise Bento Grid**: Highlights 4 core pillars (*Telemetry Scout*, *7-Day ARIMA Gating*, *Graviton Engine*, *S3 Executive Reporting*).
-- **Bespoke Platform SVGs**: Handcrafted vector symbols for EC2, Graviton ARM64 chips, $CO_2$ molecules, ARIMA curves, safety shields, and S3 buckets.
+- **Enterprise Bento Grid**: Highlights 4 core pillars (*Telemetry Scout*, *7-Day Forecast Gating*, *Graviton Engine*, *S3 Executive Reporting*).
+- **Bespoke Platform SVGs**: Handcrafted vector symbols for EC2, Graviton ARM64 chips, $CO_2$ molecules, forecast curves, safety shields, and S3 buckets.
 
 ### 2. Interactive Agent Workspace Console
-Accessible at `http://127.0.0.1:8501/workspace.html` ([`Frontend/workspace.html`](file:///d:/Projects/CO2Ops/Frontend/workspace.html)):
+`Frontend/workspace.html`:
 - **Session Management**: Independent session generator with persistent User ID and active Session ID.
 - **Agent Swarm Telemetry**: Live status dots displaying sub-agent activity.
 - **1-Click Prompt Chips**: Instant evaluation prompts (e.g., *"Audit EC2 fleet in us-east-1"*, *"Compare m5.2xlarge vs Graviton m6g.large"*).
 - **Streaming Chat & Thinking State**: Real-time response stream with animated indicator during multi-step reasoning.
-- **Legacy Streamlit App**: Streamlit application ([`Frontend/app.py`](file:///d:/Projects/CO2Ops/Frontend/app.py)) preserved with automatic local API fallback.
+
+### 3. Streamlit Workspace (what Docker actually runs today)
+`Frontend/app.py` — the primary path for local dev (`run_local.ps1`, manual launch) and the current Docker image. Same chat/session mechanics as the workspace console above, in Streamlit's own UI shell.
 
 ---
 
 ## ⚡ FastAPI REST Backend & Session Store
 
-The backend exposes clean REST endpoints documented automatically via OpenAPI / Swagger UI at `http://127.0.0.1:8080/docs`:
+The backend is Google ADK's own FastAPI app (via `get_fast_api_app`, wrapped by [`server.py`](./co2ops_agent/server.py)), documented automatically via OpenAPI / Swagger UI at `http://127.0.0.1:8080/docs`. Every route except `/` and `/health` now requires an `X-API-Key` header matching `CO2OPS_API_KEY`:
 
 | Endpoint | Method | Description |
 |---|:---:|---|
-| **`/health`** | `GET` | Health check reporting service status, active sessions, Bedrock model ID, and region. |
-| **`/api/sessions`** | `POST` | Creates a new user session with a fresh `CO2OpsState` instance. |
-| **`/api/sessions/{session_id}`** | `GET` | Retrieves full state snapshot (telemetry, forecasts, safety decisions, messages). |
-| **`/api/chat`** | `POST` | Native REST chat endpoint routing prompts through `BedrockOrchestrator`. |
-| **`/run`** | `POST` | Backwards-compatibility endpoint supporting legacy payloads and frontend clients. |
+| **`/`** | `GET` | Root health check (used by the Docker `HEALTHCHECK`). Public — no API key required. |
+| **`/health`** | `GET` | ADK's health endpoint. Public — no API key required. |
+| **`/apps/{app_name}/users/{user_id}/sessions/{session_id}`** | `POST` | Creates a session for a user (`app_name` is `co2ops_agent`). Called by both frontends before the first message. |
+| **`/run`** | `POST` | Runs the root agent for one turn and returns its events/response. What the frontend chat calls on every message. |
+| **`/run_sse`** | `POST` | Same as `/run`, but streamed as Server-Sent Events. Provided by ADK; not currently used by either frontend. |
 | **`/docs`** | `GET` | Interactive OpenAPI Swagger UI documentation. |
 
 ---
@@ -398,68 +350,66 @@ The backend exposes clean REST endpoints documented automatically via OpenAPI / 
 - **Git**
 - **AWS CLI** (optional for live AWS features; mock demo works out of the box)
 
-### 2. One-Command Launch (Windows PowerShell)
+### 2. Configure Environment
+```bash
+cp .env.example .env
+```
+Fill in `GEMINI_API_KEY` (required — get one at [aistudio.google.com](https://aistudio.google.com/app/apikey)) and `CO2OPS_API_KEY` (required — the backend refuses **every** request without it; generate one with `python -c "import secrets; print(secrets.token_urlsafe(32))"`). `SAGEMAKER_ENDPOINT_NAME` is optional — leave it unset and forecasting runs on the local ARIMA fallback instead.
+
+### 3. Recommended: Docker Compose
+```bash
+docker compose up --build
+```
+This builds and runs the authenticated backend (`co2ops_agent/server.py`, port 8080) and the Streamlit frontend (`Frontend/app.py`, port 8501), both requiring `CO2OPS_API_KEY` to talk to each other.
+
+### 4. Windows: One-Command Launch (PowerShell, no Docker)
 ```powershell
 .\run_local.ps1
 ```
-This launcher automatically:
+This launcher:
 1. Configures the Python virtual environment (`.venv`).
-2. Installs required dependencies from `co2ops_agent/requirements.txt`.
-3. Launches the **FastAPI Backend Server** on `http://127.0.0.1:8080`.
-4. Launches the **Frontend Server** on `http://127.0.0.1:8501`.
+2. Installs dependencies from `co2ops_agent/requirements.txt` and `Frontend/requirements.txt`.
+3. Launches the authenticated backend (`co2ops_agent/server.py`) on `http://127.0.0.1:8080`.
+4. Launches the Streamlit workspace (`Frontend/app.py`) on `http://localhost:8501`.
 
-### 3. Manual Launch
-**Terminal 1 (Backend Orchestrator):**
+### 5. Manual Launch (any OS, no Docker)
+**Terminal 1 (Backend):**
 ```bash
-python -m uvicorn co2ops_agent.api:app --port 8080 --host 127.0.0.1
+python co2ops_agent/server.py
 ```
-
-**Terminal 2 (Frontend Server):**
+**Terminal 2 (Frontend):**
 ```bash
-cd Frontend
-python -m http.server 8501
+streamlit run Frontend/app.py --server.port 8501
 ```
+If you'd rather serve the static `index.html`/`workspace.html` pages instead of Streamlit (they're not wired into the Docker image right now — see the note in [Dual-Surface Frontend](#-dual-surface-frontend-mixpanel-editorial-aesthetic)), create `Frontend/env.js` from `Frontend/env.js.template` yourself with your `CO2OPS_API_URL` and `CO2OPS_API_KEY` filled in, then serve the `Frontend/` folder with any static file server.
 
 Access the application:
-- **Mixpanel Landing Page**: `http://127.0.0.1:8501/`
-- **Interactive Workspace Console**: `http://127.0.0.1:8501/workspace.html`
+- **Streamlit Workspace**: `http://localhost:8501`
 - **Interactive Swagger API Docs**: `http://127.0.0.1:8080/docs`
 
 ---
 
-## 🧪 Automated Verification Suite (194 Passing Tests)
-
-CO2Ops is validated by an extensive 194-test regression suite ensuring 100% test coverage across all agents, tools, safety engines, and AWS adapters:
+## 🧪 Automated Verification Suite (52 Passing Tests)
 
 ```bash
 pytest tests/ -v --disable-warnings
 ```
 
-### Verified Test Summary:
+### Actual Test Summary (run against this branch):
 ```text
-tests/test_bedrock_foundation.py ................. PASSED [ 11%]
-tests/test_infra_scout_bedrock.py ................ PASSED [ 18%]
-tests/test_optimization_advisor_bedrock.py ....... PASSED [ 26%]
-tests/test_forecast_and_impact_bedrock.py ........ PASSED [ 34%]
-tests/test_hardened_carbon_impact.py ............. PASSED [ 42%]
-tests/test_safety_and_executor_bedrock.py ........ PASSED [ 51%]
-tests/test_safety_regression.py .................. PASSED [ 67%]
-tests/test_hardened_executor.py .................. PASSED [ 78%]
-tests/test_aws_executor.py ....................... PASSED [ 82%]
-tests/test_telemetry_layer.py .................... PASSED [ 88%]
-tests/test_fastapi_integration.py ................ PASSED [ 93%]
-tests/test_e2e_readonly.py ....................... PASSED [ 97%]
-tests/test_no_google_runtime_dependencies.py ..... PASSED [ 99%]
-tests/test_root_agent.py ......................... PASSED [100%]
+tests/test_aws_carbon.py ......................... 4 passed
+tests/test_aws_executor.py ....................... 8 passed
+tests/test_aws_forecaster.py ..................... 6 passed
+tests/test_aws_pricing.py ........................ 5 passed
+tests/test_aws_scout.py .......................... 5 passed
+tests/test_root_agent.py ......................... 7 passed
+tests/test_sagemaker_forecaster.py ............... 4 passed
+tests/test_secrets_access_manager.py ............. 4 passed
+tests/test_summary_and_presentation.py ........... 8 passed
 
-======================== 194 passed in full suite ========================
+======================== 52 passed in 3.77s ========================
 ```
-
-### Safe Real-AWS Read-Only Validation:
-To verify live AWS EC2 and CloudWatch connectivity safely without mutating infrastructure:
-```bash
-python -m co2ops_agent.e2e_readonly
-```
+`test_aws_executor.py` covers the code-enforced safety gate directly, including the `blocked` and `force=True` override paths. `test_sagemaker_forecaster.py` covers the SageMaker-with-ARIMA-fallback logic in `forecaster_agent.py`, including the fallback triggering correctly when the endpoint call fails.
 
 ---
 
@@ -469,11 +419,14 @@ For deploying CO2Ops into your AWS production environment, refer to the step-by-
 
 👉 **[AWS_DEPLOYMENT_PLAN.md](./AWS_DEPLOYMENT_PLAN.md)**
 
+Automated build-and-push scripts are also provided: `./deploy_aws.sh <region>` (Linux/macOS) or `.\deploy_aws.ps1 -AwsRegion <region>` (Windows), with an optional `--with-sagemaker` / `-DeploySageMaker` flag to also stand up the forecasting endpoint below.
+
 ### Key AWS Services:
 - **Compute**: AWS App Runner or AWS ECS Fargate for containerized multi-agent execution.
-- **Inference**: Amazon Bedrock for Anthropic Claude foundation model orchestration.
+- **Inference (agent reasoning)**: Google Gemini via the Google AI API (`GEMINI_API_KEY`) — not an AWS service; stored in AWS Secrets Manager alongside the other keys per the deployment plan.
+- **Inference (forecasting, optional)**: Amazon SageMaker AI Serverless Inference (`co2ops_agent/sagemaker_model/`) — falls back to local ARIMA automatically if not deployed.
 - **Storage**: Amazon S3 for executive reports, charts, and slide deck storage.
-- **Secrets Management**: AWS Secrets Manager and SSM Parameter Store for Climatiq and API keys.
+- **Secrets Management**: AWS Secrets Manager and SSM Parameter Store for Gemini, Climatiq, and the backend's own `CO2OPS_API_KEY`.
 - **Observability**: Amazon CloudWatch for telemetry collection and alarming.
 - **Scheduled Ingestion**: AWS Lambda + Amazon EventBridge for daily metric snapshots.
 
@@ -485,16 +438,18 @@ Please refer to [`contributions.md`](./contributions.md) for full contribution g
 
 | Area | Current Status | Description & Verification State | Priority for Contributors |
 |---|:---:|---|:---:|
-| **Backend Python Code** | ✅ Working | Core multi-agent framework, DuckDB analytics, and state management operational. | Maintenance |
-| **Safety Engine** | ✅ Verified | 6-part deterministic ARIMA safety gate; fails closed on threshold breach. | High Invariance |
-| **Executor Logic** | ✅ Verified by Tests | 3-step state machine (`stop` $\to$ `modify` $\to$ `start`) with automated rollback. | Needs Live Validation |
-| **FastAPI / API Layer** | ✅ Existing & Tested | REST endpoints (`/api/chat`, `/api/sessions`, `/run`, `/health`) with session persistence. | Live SSE Streaming |
-| **Local / Mock / Demo Operation** | ✅ Working | Full local demo flow operating with synthetic benchmark fleet and price cache. | Ready to Run Locally |
-| **Real AWS EC2 Discovery** | ✅ AWS CLI Verified | Queries live running EC2 instances via `boto3.client('ec2').describe_instances()`. | Tested with AWS Credentials |
-| **Real CloudWatch Telemetry** | ⏳ Needs Live E2E Verification | Metric ingestion implemented in `co2ops_agent/e2e_readonly.py`; needs live workload runs. | 🔴 **High Priority** |
-| **Real Bedrock Inference** | ❌ Blocked by AWS Restriction | Bedrock client & agent loops ready; requires live AWS account quota and model access. | 🔴 **Critical Priority** |
+| **Backend Python Code** | ✅ Working | Google ADK multi-agent framework (Gemini), DuckDB analytics. | Maintenance |
+| **Safety Engine** | ✅ Verified by Tests | Average CPU/Mem utilization gate, enforced in code (not just prompt); see [Mathematical Safety](#-mathematical-safety-the-code-enforced-safety-gate) for its known limits. | High Invariance (Do Not Weaken) |
+| **Executor Logic** | ⚠️ Partially Verified | 3-step state machine (`stop` → `modify` → `start`) with boto3 waiters; **no automatic rollback yet** on partial failure. | 🔴 **High Priority** |
+| **Backend Auth** | ✅ Added | `X-API-Key` middleware, fails closed if unset (see [`server.py`](./co2ops_agent/server.py)). | Needs real per-user auth for prod (current key is shared & visible in frontend JS) |
+| **Forecasting Engine** | ✅ Working, Tested | SageMaker AI endpoint (optional) with automatic local ARIMA fallback; response reports which one ran. | Train a real model for the endpoint (current `inference.py` is a linear-trend placeholder) |
+| **Static Frontend (index.html/workspace.html)** | ⚠️ Not in Docker Image | `Frontend/Dockerfile` currently builds the Streamlit app only. | 🟡 Wire the static pages back into the Docker image, or drop them |
+| **FastAPI / API Layer** | ✅ Existing & Tested | ADK's own REST endpoints (`/apps/.../sessions/{id}`, `/run`, `/health`) with session persistence. | Live SSE Streaming (`/run_sse` exists in ADK, unused by frontend) |
+| **Local / Mock / Demo Operation** | ✅ Working | Full local demo flow operating with a synthetic benchmark fleet and cached pricing. | Ready to Run Locally |
+| **Real AWS EC2 Discovery** | ✅ AWS CLI Verified | Appends live running EC2 instances via `boto3.client('ec2').describe_instances()` (single region, placeholder utilization figures today — not yet wired to CloudWatch at discovery time). | Wire discovery-time CPU/Mem to CloudWatch |
+| **Real CloudWatch Telemetry** | ⏳ Needs Live E2E Verification | `forecaster_agent` pulls real CloudWatch history when available, with a deterministic synthetic fallback otherwise. | 🔴 **High Priority** |
 | **Real AWS Mutation** | ❌ Not Yet Validated | Rightsizing state machine tested via mocked boto3; requires sandbox live validation. | 🔴 **High Priority** |
-| **Public Deployment** | ⏳ Not Deployed | Containerized Docker setup exists; production cloud hosting (App Runner / ECS) needed. | 🟡 **Medium Priority** |
+| **Public Deployment** | ⏳ Not Deployed | Containerized Docker setup exists (with the auth middleware wired in); production cloud hosting (App Runner / ECS) needed. | 🟡 **Medium Priority** |
 
 ---
 
@@ -508,61 +463,59 @@ CO2Ops/
 ├── CONTRIBUTING.md             # GitHub standard entry point pointing to contributions.md
 ├── run_local.ps1               # Automated local development launcher (Windows)
 ├── docker-compose.yml          # Containerized local orchestration
+├── .env.example                # Template for GEMINI_API_KEY, CO2OPS_API_KEY, SAGEMAKER_*, etc.
+├── deploy_aws.sh                # One-command build+push to ECR (Linux/macOS), optional --with-sagemaker
+├── deploy_aws.ps1               # Same, for Windows PowerShell
 │
-├── Frontend/                   # Dual-surface frontend application
-│   ├── index.html              # Mixpanel editorial landing page (warm canvas & Garnett fonts)
-│   ├── workspace.html          # Interactive agent chat & session workspace console
-│   ├── app.py                  # Streamlit chat application
+├── Frontend/                   # Frontend application
+│   ├── index.html              # Mixpanel editorial landing page (not in the Docker image today)
+│   ├── workspace.html          # Interactive agent chat & session workspace console (same)
+│   ├── app.py                  # Streamlit chat app - what Docker/run_local.ps1 actually run
 │   ├── style.css               # Design system tokens & workspace CSS
-│   ├── main.js                 # Navigation & FastAPI REST client
+│   ├── main.js                 # Navigation & REST client for index.html/workspace.html (sends X-API-Key)
+│   ├── entrypoint.sh            # Renders env.js for the static pages, if you serve them yourself
+│   ├── env.js.template          # Template for CO2OPS_API_URL / CO2OPS_API_KEY injection
 │   └── assets/mixpanel/fonts/  # Garnett & Arizona woff2 font files
 │
 ├── co2ops_agent/               # Multi-agent orchestrator & analytical sub-agents
-│   ├── api.py                  # FastAPI REST backend and session state store
-│   ├── agent.py                # Root agent coordinator (Amazon Bedrock / Claude)
-│   ├── e2e_readonly.py         # Real AWS read-only E2E validation runner
+│   ├── server.py               # FastAPI entrypoint: wraps ADK's app with X-API-Key auth
+│   ├── agent.py                # Root agent (google.adk.agents.Agent, Gemini-backed)
 │   ├── custom_template.pptx    # Base PowerPoint template for executive slide decks
 │   ├── secrets_access_manager.py # AWS Secrets Manager & SSM Parameter Store adapter
-│   ├── bedrock/                # Bedrock client wrapper, agent foundation, and CO2OpsState
-│   │   ├── agent.py            # BedrockAgent with dynamic tool introspection & Converse loop
-│   │   ├── client.py           # BedrockModelClient wrapper around boto3 converse API
-│   │   ├── orchestrator.py     # BedrockOrchestrator & BedrockPipeline (sequential execution)
-│   │   └── state.py            # CO2OpsState typed execution state container
+│   ├── sagemaker_model/        # Optional SageMaker forecasting endpoint
+│   │   ├── inference.py        # model_fn/input_fn/predict_fn/output_fn handler
+│   │   └── deploy_endpoint.py  # Packages & deploys a Serverless Inference Endpoint
 │   │
-│   └── agents/                 # Specialized analytical sub-agents
-│       ├── optimization_advisor_agent/  # EC2 fleet scouting & Graviton profiler
+│   └── agents/                 # Specialized analytical sub-agents (all google.adk LlmAgents)
+│       ├── optimization_advisor_agent/  # SequentialAgent: fleet scouting & Graviton profiler
 │       │   └── sub_agents/
 │       │       ├── infra_scout_agent/       # Fleet discovery & DuckDB SQL engine
 │       │       ├── workload_profiler_agent/ # Utilization profiling
 │       │       └── recommender_agent/       # Graviton recommendation engine
-│       ├── forecaster_agent/            # 7-day statistical ARIMA(1,0,0) model
+│       ├── forecaster_agent/            # SageMaker AI, with local ARIMA(1,0,0) fallback
 │       ├── impact_calculator_agent/     # AWS Pricing API & Climatiq emissions engine
-│       ├── safe_executor_agent/         # 6-gate safety engine & boto3 state machine
-│       └── summary_generator_agent/     # Markdown reports & PPTX slide deck generator
+│       ├── safe_executor_agent/         # Code-enforced safety gate & boto3 state machine
+│       ├── summary_generator_agent/     # Markdown reports & PPTX slide deck generator
+│       └── presentation_generator_agent/ # Slide file creation helpers
 │
 ├── aws_lambda/                 # Continuous telemetry snapshot & scheduled pipeline
 │   ├── daily_data_snapshot.py  # Lambda handler for daily metrics ingestion
 │   └── template.yaml           # AWS SAM deployment template
 │
-└── tests/                      # Automated test suite (194 passing tests)
-    ├── test_bedrock_foundation.py
-    ├── test_infra_scout_bedrock.py
-    ├── test_optimization_advisor_bedrock.py
-    ├── test_forecast_and_impact_bedrock.py
-    ├── test_hardened_carbon_impact.py
-    ├── test_safety_and_executor_bedrock.py
-    ├── test_safety_regression.py
-    ├── test_hardened_executor.py
+└── tests/                      # Automated test suite (52 passing tests)
+    ├── test_aws_carbon.py
     ├── test_aws_executor.py
-    ├── test_telemetry_layer.py
-    ├── test_fastapi_integration.py
-    ├── test_e2e_readonly.py
-    ├── test_no_google_runtime_dependencies.py
-    └── test_root_agent.py
+    ├── test_aws_forecaster.py
+    ├── test_aws_pricing.py
+    ├── test_aws_scout.py
+    ├── test_root_agent.py
+    ├── test_sagemaker_forecaster.py
+    ├── test_secrets_access_manager.py
+    └── test_summary_and_presentation.py
 ```
 
 ---
 
 <div align="center">
-  <sub>Built with Amazon Bedrock & Anthropic Claude for Sustainable Cloud Operations. © 2026 CO2Ops. All rights reserved.</sub>
+  <sub>Built with Google ADK, Gemini & Amazon SageMaker AI for Sustainable Cloud Operations. © 2026 CO2Ops. All rights reserved.</sub>
 </div>

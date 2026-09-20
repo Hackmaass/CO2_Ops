@@ -22,5 +22,12 @@ COPY . /app
 
 EXPOSE 8080
 
-# Start ADK API server for AWS-optimized CO2Ops Agent
-CMD ["adk", "api_server", "--host", "0.0.0.0", "--port", "8080", "--allow_origins", "*", "--auto_create_session", "/app"]
+# Health check to ensure API server is responding
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8080/ || exit 1
+
+# Start the CO2Ops backend. NOTE: we do NOT use the raw `adk api_server` CLI here -
+# ADK's own docs say that server is unauthenticated and must sit behind an auth layer
+# before touching untrusted/public networks. server.py wraps the same app and requires
+# an API key (CO2OPS_API_KEY) on every request. See server.py for details.
+CMD ["python", "server.py"]

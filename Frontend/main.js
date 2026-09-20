@@ -4,6 +4,13 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const API_BASE_URL = window.CO2OPS_API_URL || 'http://127.0.0.1:8080';
+  // Backend now requires this on every request (see co2ops_agent/server.py).
+  // NOTE: a key embedded in static JS is visible to anyone who views page source -
+  // this stops opportunistic scanners hitting the raw ADK server, it is NOT real
+  // per-user auth. For real auth, put a small backend-for-frontend in front that
+  // injects this key server-side, or use Cognito/your IdP instead.
+  const API_KEY = window.CO2OPS_API_KEY || '';
+  const API_HEADERS = { 'Content-Type': 'application/json', 'X-API-Key': API_KEY };
   const APP_NAME = 'co2ops_agent';
 
   // --- UUID Generator ---
@@ -98,9 +105,34 @@ document.addEventListener('DOMContentLoaded', () => {
       chatHistory.scrollTop = chatHistory.scrollHeight;
     };
 
+    // --- Live "which sub-agent is working" indicator ---
+    const AGENT_KEYWORDS = [
+      { key: 'safe_executor', label: '@safe_executor_agent', words: ['migrate', 'execute', 'resize', 'restart', 'stop instance', 'safely'] },
+      { key: 'forecasting_tool', label: '@forecasting_tool_agent', words: ['forecast', 'arima', 'predict', '7-day', 'next week'] },
+      { key: 'impact_calculator', label: '@impact_calculator_agent', words: ['compare', 'impact', 'savings', 'vs ', 'graviton'] },
+      { key: 'summary_generator', label: '@summary_generator_agent', words: ['summary', 'report', 'slides', 'presentation', 'weekly'] },
+      { key: 'optimization_advisor', label: '@optimization_advisor_agent', words: ['audit', 'underutilized', 'optimi', 'rightsiz', 'recommend'] },
+    ];
+
+    const guessAgent = (text) => {
+      const lower = text.toLowerCase();
+      const hit = AGENT_KEYWORDS.find((a) => a.words.some((w) => lower.includes(w)));
+      return hit || AGENT_KEYWORDS[4]; // default to optimization_advisor
+    };
+
+    const setActiveAgent = (agentKey) => {
+      document.querySelectorAll('.swarm-item').forEach((el) => {
+        el.classList.toggle('active-agent', el.getAttribute('data-agent') === agentKey);
+      });
+    };
+
+    const clearActiveAgent = () => {
+      document.querySelectorAll('.swarm-item').forEach((el) => el.classList.remove('active-agent'));
+    };
+
     // Append Thinking Indicator
     let thinkingEl = null;
-    const showThinking = () => {
+    const showThinking = (label) => {
       if (thinkingEl) return;
       thinkingEl = document.createElement('div');
       thinkingEl.className = 'chat-message assistant-msg';
@@ -110,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="msg-sender">CO2Ops Orchestrator</div>
           <div class="thinking-bubble">
             <span class="dot-flashing"></span>
-            <span>Auditing fleet and coordinating AWS sub-agents...</span>
+            <span>Delegating to ${label}...</span>
           </div>
         </div>
       `;
@@ -133,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         await fetch(`${API_BASE_URL}/apps/${APP_NAME}/users/${userId}/sessions/${sessionId}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_HEADERS,
           body: JSON.stringify({})
         });
       } catch (err) {
@@ -159,12 +191,15 @@ document.addEventListener('DOMContentLoaded', () => {
       chatInput.value = '';
       chatInput.disabled = true;
       if (sendBtn) sendBtn.disabled = true;
-      showThinking();
+
+      const guessed = guessAgent(messageText);
+      setActiveAgent(guessed.key);
+      showThinking(guessed.label);
 
       try {
         const res = await fetch(`${API_BASE_URL}/run`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_HEADERS,
           body: JSON.stringify({
             app_name: APP_NAME,
             user_id: userId,
@@ -201,6 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           if (fullText.trim()) {
+            // Correct the highlight using what the orchestrator actually says it delegated to
+            const mentioned = AGENT_KEYWORDS.find((a) => fullText.includes(a.key));
+            if (mentioned) setActiveAgent(mentioned.key);
             appendMessage('assistant', fullText);
           } else {
             appendMessage('assistant', 'Action processed by CO2Ops. All AWS sub-agents reported success.');
@@ -211,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         hideThinking();
+        clearActiveAgent();
         console.error('Fetch error:', err);
         appendMessage('assistant', `Could not reach ADK backend on ${API_BASE_URL}. Ensure the backend is running on port 8080.`);
       } finally {

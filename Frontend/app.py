@@ -4,6 +4,12 @@ import json
 import os
 import uuid
 import time
+from dotenv import load_dotenv
+
+# So CO2OPS_API_KEY/CO2OPS_API_URL from a local .env reach this app the same way
+# they reach the backend - docker-compose sets these as real container env vars,
+# but a plain `streamlit run Frontend/app.py` only has the .env file to go on.
+load_dotenv()
 
 # Set Google-inspired color theme
 GOOGLE_COLORS = {
@@ -155,6 +161,8 @@ st.markdown(
 # Constants
 API_BASE_URL = os.environ.get("CO2OPS_API_URL", "http://127.0.0.1:8080")
 APP_NAME = "co2ops_agent"
+# Backend now requires this on every request (see co2ops_agent/server.py).
+API_HEADERS = {"Content-Type": "application/json", "X-API-Key": os.environ.get("CO2OPS_API_KEY", "")}
 
 # Initialize session state variables
 if "user_id" not in st.session_state:
@@ -173,7 +181,7 @@ def create_session():
     session_id = f"session-{int(time.time())}"
     response = requests.post(
         f"{API_BASE_URL}/apps/{APP_NAME}/users/{st.session_state.user_id}/sessions/{session_id}",
-        headers={"Content-Type": "application/json"},
+        headers=API_HEADERS,
         data=json.dumps({})
     )
     
@@ -194,7 +202,7 @@ def send_message(message):
     # Send message to API
     response = requests.post(
         f"{API_BASE_URL}/run",
-        headers={"Content-Type": "application/json"},
+        headers=API_HEADERS,
         data=json.dumps({
             "app_name": APP_NAME,
             "user_id": st.session_state.user_id,
