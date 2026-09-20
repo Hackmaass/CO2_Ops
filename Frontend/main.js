@@ -1,14 +1,9 @@
 // ==========================================================================
-// CO2Ops — Frontend Controller (Landing Page & Workspace Console)
+// CO2Ops — Frontend Controller (Streamlit-Style AWS Console)
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
   const API_BASE_URL = window.CO2OPS_API_URL || 'http://127.0.0.1:8080';
-  // Backend now requires this on every request (see co2ops_agent/server.py).
-  // NOTE: a key embedded in static JS is visible to anyone who views page source -
-  // this stops opportunistic scanners hitting the raw ADK server, it is NOT real
-  // per-user auth. For real auth, put a small backend-for-frontend in front that
-  // injects this key server-side, or use Cognito/your IdP instead.
   const API_KEY = window.CO2OPS_API_KEY || '';
   const API_HEADERS = { 'Content-Type': 'application/json', 'X-API-Key': API_KEY };
   const APP_NAME = 'co2ops_agent';
@@ -53,101 +48,107 @@ document.addEventListener('DOMContentLoaded', () => {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-      // Code blocks
-      html = html.replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+      // Code blocks with syntax copy button
+      html = html.replace(/```([a-z]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<div class="st-code-block"><div class="st-code-header"><span>${lang || 'text'}</span></div><pre><code>${code.trim()}</code></pre></div>`;
+      });
       // Inline code
-      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      html = html.replace(/`([^`]+)`/g, '<code class="st-inline-code">$1</code>');
+      // Headers
+      html = html.replace(/^### (.*$)/gim, '<h4 class="st-heading-3">$1</h4>');
+      html = html.replace(/^## (.*$)/gim, '<h3 class="st-heading-2">$1</h3>');
+      html = html.replace(/^# (.*$)/gim, '<h2 class="st-heading-1">$1</h2>');
       // Bold
       html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
       // Italic
       html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      // Horizontal rules
+      html = html.replace(/^---$/gm, '<div class="st-divider"></div>');
       // Links
-      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="st-link">$1</a>');
       // Unordered lists
       html = html.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
-      html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-      // Line breaks
+      html = html.replace(/(<li>.*<\/li>)/s, '<ul class="st-list">$1</ul>');
+      // Paragraphs
       html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>');
 
       return `<p>${html}</p>`;
     };
 
-    // Append Chat Bubble
+    // Append Streamlit Chat Message
     const appendMessage = (role, text) => {
       const msgDiv = document.createElement('div');
-      msgDiv.className = `chat-message ${role === 'user' ? 'user-msg' : 'assistant-msg'}`;
+      msgDiv.className = `st-chat-message ${role}`;
 
       const avatarDiv = document.createElement('div');
-      avatarDiv.className = 'msg-avatar';
-      if (role === 'user') {
-        avatarDiv.textContent = 'YOU';
-      } else {
-        avatarDiv.innerHTML = '<svg width="20" height="20"><use href="#icon-copilot-spark"/></svg>';
-      }
+      avatarDiv.className = `st-avatar ${role}-avatar`;
+      avatarDiv.textContent = role === 'user' ? '👤' : '🌱';
 
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'msg-content';
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'st-message-bubble';
 
       const senderDiv = document.createElement('div');
-      senderDiv.className = 'msg-sender';
+      senderDiv.className = 'st-message-sender';
       senderDiv.textContent = role === 'user' ? 'You' : 'CO2Ops Orchestrator';
 
-      const textDiv = document.createElement('div');
-      textDiv.className = 'msg-text';
-      textDiv.innerHTML = renderMarkdown(text);
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'st-message-content';
+      contentDiv.innerHTML = renderMarkdown(text);
 
-      contentDiv.appendChild(senderDiv);
-      contentDiv.appendChild(textDiv);
+      bubbleDiv.appendChild(senderDiv);
+      bubbleDiv.appendChild(contentDiv);
       msgDiv.appendChild(avatarDiv);
-      msgDiv.appendChild(contentDiv);
+      msgDiv.appendChild(bubbleDiv);
 
       chatHistory.appendChild(msgDiv);
       chatHistory.scrollTop = chatHistory.scrollHeight;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     };
 
-    // --- Live "which sub-agent is working" indicator ---
+    // Sub-agent matching
     const AGENT_KEYWORDS = [
-      { key: 'safe_executor', label: '@safe_executor_agent', words: ['migrate', 'execute', 'resize', 'restart', 'stop instance', 'safely'] },
-      { key: 'forecasting_tool', label: '@forecasting_tool_agent', words: ['forecast', 'arima', 'predict', '7-day', 'next week'] },
-      { key: 'impact_calculator', label: '@impact_calculator_agent', words: ['compare', 'impact', 'savings', 'vs ', 'graviton'] },
-      { key: 'summary_generator', label: '@summary_generator_agent', words: ['summary', 'report', 'slides', 'presentation', 'weekly'] },
-      { key: 'optimization_advisor', label: '@optimization_advisor_agent', words: ['audit', 'underutilized', 'optimi', 'rightsiz', 'recommend'] },
+      { key: 'safe_executor', label: '@safe_executor_agent (Zero-Downtime Safe Migrator)', words: ['migrate', 'execute', 'resize', 'restart', 'stop instance', 'safely'] },
+      { key: 'forecasting_tool', label: '@forecasting_tool_agent (Amazon SageMaker AI)', words: ['forecast', 'arima', 'sagemaker', 'predict', '7-day', 'next week'] },
+      { key: 'impact_calculator', label: '@impact_calculator_agent (FinOps & Graviton Diff)', words: ['compare', 'impact', 'savings', 'vs ', 'graviton'] },
+      { key: 'summary_generator', label: '@summary_generator_agent (S3 Executive Reporter)', words: ['summary', 'report', 'slides', 'presentation', 'weekly'] },
+      { key: 'optimization_advisor', label: '@optimization_advisor_agent (EC2 Rightsizing)', words: ['audit', 'underutilized', 'optimi', 'rightsiz', 'recommend'] },
     ];
 
     const guessAgent = (text) => {
       const lower = text.toLowerCase();
       const hit = AGENT_KEYWORDS.find((a) => a.words.some((w) => lower.includes(w)));
-      return hit || AGENT_KEYWORDS[4]; // default to optimization_advisor
+      return hit || AGENT_KEYWORDS[4];
     };
 
     const setActiveAgent = (agentKey) => {
-      document.querySelectorAll('.swarm-item').forEach((el) => {
+      document.querySelectorAll('.st-swarm-item, .swarm-item').forEach((el) => {
         el.classList.toggle('active-agent', el.getAttribute('data-agent') === agentKey);
       });
     };
 
     const clearActiveAgent = () => {
-      document.querySelectorAll('.swarm-item').forEach((el) => el.classList.remove('active-agent'));
+      document.querySelectorAll('.st-swarm-item, .swarm-item').forEach((el) => el.classList.remove('active-agent'));
     };
 
-    // Append Thinking Indicator
+    // Streamlit-Style Thinking Indicator
     let thinkingEl = null;
     const showThinking = (label) => {
       if (thinkingEl) return;
       thinkingEl = document.createElement('div');
-      thinkingEl.className = 'chat-message assistant-msg';
+      thinkingEl.className = 'st-chat-message assistant thinking-msg';
       thinkingEl.innerHTML = `
-        <div class="msg-avatar"><svg width="20" height="20"><use href="#icon-copilot-spark"/></svg></div>
-        <div class="msg-content">
-          <div class="msg-sender">CO2Ops Orchestrator</div>
-          <div class="thinking-bubble">
-            <span class="dot-flashing"></span>
-            <span>Delegating to ${label}...</span>
+        <div class="st-avatar assistant-avatar">🌱</div>
+        <div class="st-message-bubble">
+          <div class="st-message-sender">CO2Ops Orchestrator</div>
+          <div class="st-thinking-box">
+            <div class="st-dot-flashing"></div>
+            <span class="st-thinking-text">Working on your request with <strong>${label}</strong>...</span>
           </div>
         </div>
       `;
       chatHistory.appendChild(thinkingEl);
       chatHistory.scrollTop = chatHistory.scrollHeight;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     };
 
     const hideThinking = () => {
@@ -179,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newSessionBtn) {
       newSessionBtn.addEventListener('click', () => {
         createSession();
-        appendMessage('assistant', `Started a new session: <code>${sessionId}</code>. How can I help optimize your AWS fleet?`);
+        appendMessage('assistant', `Started a new session: <code class="st-inline-code">${sessionId}</code>. How can I assist with your AWS infrastructure optimization today?`);
       });
     }
 
@@ -236,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           if (fullText.trim()) {
-            // Correct the highlight using what the orchestrator actually says it delegated to
             const mentioned = AGENT_KEYWORDS.find((a) => fullText.includes(a.key));
             if (mentioned) setActiveAgent(mentioned.key);
             appendMessage('assistant', fullText);
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hideThinking();
         clearActiveAgent();
         console.error('Fetch error:', err);
-        appendMessage('assistant', `Could not reach ADK backend on ${API_BASE_URL}. Ensure the backend is running on port 8080.`);
+        appendMessage('assistant', `Could not reach ADK backend on ${API_BASE_URL}. Ensure the service is healthy.`);
       } finally {
         chatInput.disabled = false;
         if (sendBtn) sendBtn.disabled = false;
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Quick chip buttons
-    document.querySelectorAll('.quick-chip').forEach((chip) => {
+    document.querySelectorAll('.quick-chip, .st-chip-btn').forEach((chip) => {
       chip.addEventListener('click', () => {
         const prompt = chip.getAttribute('data-prompt');
         if (prompt) {
@@ -290,7 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   // LANDING PAGE LOGIC
   // ==========================================================================
-  // Smooth scroll for anchor navigation
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', function (e) {
       const targetId = this.getAttribute('href').substring(1);
