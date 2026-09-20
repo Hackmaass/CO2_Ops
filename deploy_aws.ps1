@@ -17,14 +17,65 @@ Write-Host " CO2Ops - AWS Cloud Production Deployment" -ForegroundColor Cyan
 Write-Host " Targets: Amazon ECR, AWS App Runner / ECS, Amazon S3, SageMaker" -ForegroundColor Cyan
 Write-Host "=================================================================" -ForegroundColor Cyan
 
+# Auto-detect AWS CLI if not in current session PATH
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    $AwsLocations = @(
+        "$env:LOCALAPPDATA\Programs\Amazon\AWSCLIV2",
+        "C:\Program Files\Amazon\AWSCLIV2"
+    )
+    foreach ($loc in $AwsLocations) {
+        if (Test-Path "$loc\aws.exe") {
+            $env:Path = "$loc;$env:Path"
+            break
+        }
+    }
+}
+
+# Auto-detect Docker CLI if not in current session PATH
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    $DockerLocations = @(
+        "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin",
+        "C:\Program Files\Docker\Docker\resources\bin"
+    )
+    foreach ($loc in $DockerLocations) {
+        if (Test-Path "$loc\docker.exe") {
+            $env:Path = "$loc;$env:Path"
+            break
+        }
+    }
+}
+
 # 1. Check AWS CLI Authentication
 Write-Host "`n[1/7] Verifying AWS CLI authentication..." -ForegroundColor Yellow
+$CallerIdentity = $null
 try {
-    $CallerIdentity = aws sts get-caller-identity | ConvertFrom-Json
-    $AccountId = $CallerIdentity.Account
-    Write-Host "Authenticated as Account: $AccountId ($($CallerIdentity.Arn))" -ForegroundColor Green
+    $IdentityOutput = aws sts get-caller-identity 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $CallerIdentity = $IdentityOutput | Out-String | ConvertFrom-Json
+    }
 } catch {
-    Write-Host "Error: AWS CLI is not configured or authenticated. Run 'aws configure' first." -ForegroundColor Red
+    $CallerIdentity = $null
+}
+
+if (-not $CallerIdentity -or -not $CallerIdentity.Account) {
+    Write-Host "Error: AWS CLI is not configured or authenticated." -ForegroundColor Red
+    Write-Host "Please run 'aws configure' and enter your AWS Access Key ID, Secret Access Key, and default region (e.g., us-east-1)." -ForegroundColor Yellow
+    exit 1
+}
+
+$AccountId = $CallerIdentity.Account
+Write-Host "Authenticated as Account: $AccountId ($($CallerIdentity.Arn))" -ForegroundColor Green
+
+# Verify Docker is running
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Host "`nError: 'docker' command not found. Please ensure Docker Desktop is installed." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Verifying Docker engine..." -ForegroundColor DarkGray
+& docker info >$null 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nError: Docker engine is not running. Please open Docker Desktop and wait until the engine starts." -ForegroundColor Red
     exit 1
 }
 
@@ -32,15 +83,16 @@ $EcrRegistry = "$AccountId.dkr.ecr.$AwsRegion.amazonaws.com"
 
 # 2. Authenticate Docker to Amazon ECR
 Write-Host "`n[2/7] Logging in to Amazon ECR ($EcrRegistry)..." -ForegroundColor Yellow
-aws ecr get-login-password --region $AwsRegion | docker login --username AWS --password-stdin $EcrRegistry
+$EcrPass = aws ecr get-login-password --region $AwsRegion
+docker login -u AWS -p $EcrPass $EcrRegistry
 
 # 3. Create ECR Repositories if not exist
 Write-Host "`n[3/7] Ensuring ECR repositories exist..." -ForegroundColor Yellow
 foreach ($repo in @($BackendRepo, $FrontendRepo)) {
-    try {
-        aws ecr describe-repositories --repository-names $repo --region $AwsRegion | Out-Null
+    $repoCheck = aws ecr describe-repositories --repository-names $repo --region $AwsRegion 2>&1
+    if ($LASTEXITCODE -eq 0) {
         Write-Host "Repository '$repo' exists." -ForegroundColor DarkGray
-    } catch {
+    } else {
         Write-Host "Creating repository '$repo'..." -ForegroundColor Cyan
         aws ecr create-repository --repository-name $repo --region $AwsRegion | Out-Null
     }
@@ -82,7 +134,12 @@ if ($DeploySageMaker) {
     $env:SAGEMAKER_REGION = $AwsRegion
     $env:SAGEMAKER_ENDPOINT_NAME = "co2ops-load-forecaster"
     $env:AWS_METRICS_BUCKET = $BucketName
-    & python (Join-Path $PSScriptRoot "co2ops_agent\sagemaker_model\deploy_endpoint.py")
+    $PythonExe = if (Test-Path (Join-Path $PSScriptRoot ".venv\Scripts\python.exe")) {
+        Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
+    } else {
+        "python"
+    }
+    & $PythonExe (Join-Path $PSScriptRoot "co2ops_agent\sagemaker_model\deploy_endpoint.py")
 } else {
     Write-Host "`n[7/7] SageMaker deployment skipped. (Pass -DeploySageMaker to deploy serverless ML endpoint)" -ForegroundColor DarkGray
 }

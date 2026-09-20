@@ -52,7 +52,11 @@ def get_or_create_sagemaker_role(region: str) -> str:
                 RoleName=role_name,
                 PolicyArn="arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
             )
-            time.sleep(8)  # Wait for IAM role propagation across AWS
+            iam.attach_role_policy(
+                RoleName=role_name,
+                PolicyArn="arn:aws:iam::aws:policy/AmazonS3FullAccess"
+            )
+            time.sleep(10)  # Wait for IAM role propagation across AWS
             return role["Role"]["Arn"]
         except Exception as err:
             print(f"IAM role notice: {err}")
@@ -66,6 +70,7 @@ def package_code(tar_path: str):
     inference_path = os.path.join(script_dir, "inference.py")
     
     with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(inference_path, arcname="inference.py")
         tar.add(inference_path, arcname="code/inference.py")
     print(f"Packaged {inference_path} -> {tar_path}")
 
@@ -92,9 +97,9 @@ def deploy():
             )
         print(f"Created/Verified S3 artifact bucket: s3://{BUCKET_NAME}")
     except Exception as e:
-        print(f"Bucket notice: {e}")
+        print(f"Using existing S3 bucket: {BUCKET_NAME}")
 
-    # 2. Upload code tarball
+    # 2. Package and Upload inference code
     with tempfile.TemporaryDirectory() as tmpdir:
         tar_path = os.path.join(tmpdir, "model.tar.gz")
         package_code(tar_path)
@@ -114,7 +119,7 @@ def deploy():
             "Image": image_uri,
             "ModelDataUrl": model_data_url,
             "Environment": {
-                "SAGEMAKER_PROGRAM": "code/inference.py",
+                "SAGEMAKER_PROGRAM": "inference.py",
                 "SAGEMAKER_SUBMIT_DIRECTORY": model_data_url
             }
         },
