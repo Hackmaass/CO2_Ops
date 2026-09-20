@@ -7,7 +7,7 @@
 [![Multi-Agent ADK](https://img.shields.io/badge/Multi--Agent-Google%20ADK-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://google.github.io/adk-docs/)
 [![Gemini](https://img.shields.io/badge/Foundation%20Model-Gemini%202.5%20Flash-D97706?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/gemini-api)
 [![Python Version](https://img.shields.io/badge/Python-3.12%20%7C%203.13%20%7C%203.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Test Suite](https://img.shields.io/badge/Tests-52%20Passing%20(100%25)-10B981?style=for-the-badge&logo=pytest&logoColor=white)](./tests)
+[![Test Suite](https://img.shields.io/badge/Tests-71%20Passing%20(100%25)-10B981?style=for-the-badge&logo=pytest&logoColor=white)](./tests)
 [![Deterministic Safety](https://img.shields.io/badge/Safety%20Engine-7--Day%20ARIMA%20Gated-0284C7?style=for-the-badge&logo=shield&logoColor=white)](#-mathematical-safety-the-code-enforced-safety-gate)
 [![Mixpanel Aesthetic](https://img.shields.io/badge/UI%20Design-Mixpanel%20Editorial-7856FF?style=for-the-badge&logo=framer&logoColor=white)](https://mixpanel.com)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](./LICENSE)
@@ -39,8 +39,9 @@
 - [Dual-Surface Frontend: Mixpanel Editorial Aesthetic](#-dual-surface-frontend-mixpanel-editorial-aesthetic)
 - [FastAPI REST Backend & Session Store](#-fastapi-rest-backend--session-store)
 - [Local Quick Start](#-local-quick-start)
-- [Automated Verification Suite (52 Passing Tests)](#-automated-verification-suite-52-passing-tests)
+- [Automated Verification Suite (71 Passing Tests)](#-automated-verification-suite-71-passing-tests)
 - [AWS Cloud Production Deployment](#-aws-cloud-production-deployment)
+- [Automated Audit Pipeline (Serverless)](#-automated-audit-pipeline-serverless)
 - [Current Project Status & Roadmap](#-current-project-status--roadmap)
 - [Repository Directory Structure](#-repository-directory-structure)
 
@@ -389,7 +390,7 @@ Access the application:
 
 ---
 
-## 🧪 Automated Verification Suite (52 Passing Tests)
+## 🧪 Automated Verification Suite (71 Passing Tests)
 
 ```bash
 pytest tests/ -v --disable-warnings
@@ -397,8 +398,9 @@ pytest tests/ -v --disable-warnings
 
 ### Actual Test Summary (run against this branch):
 ```text
+tests/test_audit_pipeline.py ..................... 19 passed
 tests/test_aws_carbon.py ......................... 4 passed
-tests/test_aws_executor.py ....................... 8 passed
+tests/test_aws_executor.py ....................... 9 passed
 tests/test_aws_forecaster.py ..................... 6 passed
 tests/test_aws_pricing.py ........................ 5 passed
 tests/test_aws_scout.py .......................... 5 passed
@@ -407,9 +409,9 @@ tests/test_sagemaker_forecaster.py ............... 4 passed
 tests/test_secrets_access_manager.py ............. 4 passed
 tests/test_summary_and_presentation.py ........... 8 passed
 
-======================== 52 passed in 3.77s ========================
+======================== 71 passed in 19.76s ========================
 ```
-`test_aws_executor.py` covers the code-enforced safety gate directly, including the `blocked` and `force=True` override paths. `test_sagemaker_forecaster.py` covers the SageMaker-with-ARIMA-fallback logic in `forecaster_agent.py`, including the fallback triggering correctly when the endpoint call fails.
+`test_aws_executor.py` covers the code-enforced safety gate directly, including the `blocked` and `force=True` override paths. `test_sagemaker_forecaster.py` covers the SageMaker-with-ARIMA-fallback logic in `forecaster_agent.py`. `test_audit_pipeline.py` covers the serverless audit pipeline (`aws_lambda/audit_pipeline/`) end to end with every boto3 call mocked, so it runs with no AWS credentials needed.
 
 ---
 
@@ -428,7 +430,29 @@ Automated build-and-push scripts are also provided: `./deploy_aws.sh <region>` (
 - **Storage**: Amazon S3 for executive reports, charts, and slide deck storage.
 - **Secrets Management**: AWS Secrets Manager and SSM Parameter Store for Gemini, Climatiq, and the backend's own `CO2OPS_API_KEY`.
 - **Observability**: Amazon CloudWatch for telemetry collection and alarming.
-- **Scheduled Ingestion**: AWS Lambda + Amazon EventBridge for daily metric snapshots.
+- **Automated Pipeline**: AWS Lambda + Amazon EventBridge for daily metric snapshots, plus the API Gateway/SQS/Step Functions/SNS audit pipeline below.
+
+---
+
+## 🔁 Automated Audit Pipeline (Serverless)
+
+A second, asynchronous way to run a fleet audit besides chatting with the agent — a real HTTP API backed entirely by AWS-native serverless services, deployed by the same SAM template as the daily snapshot Lambda:
+
+```
+POST /audit  ──▶  SQS  ──▶  Step Functions  ──▶  SNS (notify) + S3 (store)
+(API Gateway)   (queue)      Scout → Recommend → Publish
+     ▲
+     │
+GET /audit/{job_id}  (poll status / fetch result)
+```
+
+- **API Gateway** — `POST /audit` (kick off a job) and `GET /audit/{job_id}` (poll it), both gated by an API Gateway-managed API key + usage plan (no custom auth code needed).
+- **SQS** — decouples ingestion from processing; a dead-letter queue catches jobs that fail 3 times.
+- **Step Functions** — orchestrates `ScoutFleet` → (`Choice`) → `BuildRecommendations` → `PublishFindings`, with a `Catch` on every step routing failures to a dedicated failure state.
+- **SNS** — publishes a plain-text summary (instances found, estimated $/mo and kg CO2e/mo savings) the moment a job finishes; subscribe your email to watch it happen live.
+- **S3** — every run's full result is written to `co2ops-aws-reports/pipeline-runs/{job_id}.json`, so `GET /audit/{job_id}` can serve it back without a database.
+
+This intentionally runs on plain Python + boto3 (no Gemini call, no `duckdb`/`pandas`) — see [`aws_lambda/audit_pipeline/README.md`](./aws_lambda/audit_pipeline/README.md) for why, plus full deploy and usage instructions. It's independently unit-tested with every boto3 call mocked (`tests/test_audit_pipeline.py`), so it can be verified without deploying anything.
 
 ---
 
@@ -450,6 +474,7 @@ Please refer to [`contributions.md`](./contributions.md) for full contribution g
 | **Real CloudWatch Telemetry** | ⏳ Needs Live E2E Verification | `forecaster_agent` pulls real CloudWatch history when available, with a deterministic synthetic fallback otherwise. | 🔴 **High Priority** |
 | **Real AWS Mutation** | ❌ Not Yet Validated | Rightsizing state machine tested via mocked boto3; requires sandbox live validation. | 🔴 **High Priority** |
 | **Public Deployment** | ⏳ Not Deployed | Containerized Docker setup exists (with the auth middleware wired in); production cloud hosting (App Runner / ECS) needed. | 🟡 **Medium Priority** |
+| **Automated Audit Pipeline** | ✅ Working, Unit-Tested | API Gateway → SQS → Step Functions → SNS/S3, deployed via `aws_lambda/template.yaml`. Audits a fixed benchmark fleet, not live EC2 yet. | 🟡 Wire `scout_step.py` to real `ec2.describe_instances()` + CloudWatch |
 
 ---
 
@@ -498,11 +523,22 @@ CO2Ops/
 │       ├── summary_generator_agent/     # Markdown reports & PPTX slide deck generator
 │       └── presentation_generator_agent/ # Slide file creation helpers
 │
-├── aws_lambda/                 # Continuous telemetry snapshot & scheduled pipeline
+├── aws_lambda/                 # Serverless: scheduled snapshot + async audit pipeline
 │   ├── daily_data_snapshot.py  # Lambda handler for daily metrics ingestion
-│   └── template.yaml           # AWS SAM deployment template
+│   ├── template.yaml           # AWS SAM template - both Lambdas below deploy from here
+│   └── audit_pipeline/         # API Gateway -> SQS -> Step Functions -> SNS/S3
+│       ├── fleet_data.py       # Dependency-free fleet data + profiling/recommendation logic
+│       ├── submit_audit.py     # POST /audit handler
+│       ├── process_queue.py    # SQS-triggered: starts a Step Functions execution
+│       ├── scout_step.py       # Step Functions task: find underutilized instances
+│       ├── recommend_step.py   # Step Functions task: build Graviton recommendations
+│       ├── notify_step.py      # Step Functions task: publish to SNS, write to S3
+│       ├── get_audit_status.py # GET /audit/{job_id} handler
+│       ├── state_machine.asl.json # Step Functions definition
+│       └── README.md           # Design notes, deploy & usage instructions
 │
-└── tests/                      # Automated test suite (52 passing tests)
+└── tests/                      # Automated test suite (71 passing tests)
+    ├── test_audit_pipeline.py
     ├── test_aws_carbon.py
     ├── test_aws_executor.py
     ├── test_aws_forecaster.py

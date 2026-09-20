@@ -18,6 +18,7 @@ The following status matrix outlines the current verification state of each arch
 | **Backend Auth** | ✅ Added | `X-API-Key` middleware, fails closed if unset. Current key is a shared static secret, visible in the static frontend's JS — fine for a demo, not for multi-user production. | Needs real per-user auth for prod |
 | **Forecasting Engine** | ✅ Working, Tested | SageMaker AI endpoint (optional) with automatic local ARIMA fallback; response reports which one ran. | Train a real model for the endpoint (`inference.py` is currently a linear-trend placeholder, not a trained model) |
 | **Static Frontend (index.html/workspace.html)** | ⚠️ Not in Docker Image | `Frontend/Dockerfile` currently builds the Streamlit app only — the static pages still work but need to be served separately. | 🟡 Wire them back into the Docker image, or drop them from the repo |
+| **Automated Audit Pipeline** | ✅ Working, Unit-Tested | API Gateway → SQS → Step Functions → SNS/S3 (`aws_lambda/audit_pipeline/`), deploys via `sam deploy`. | 🟡 Wire `scout_step.py` to real `ec2.describe_instances()` + CloudWatch instead of the fixed benchmark fleet |
 | **FastAPI / API Layer** | ✅ Existing & Tested | ADK's own REST endpoints (`/apps/.../sessions/{id}`, `/run`, `/health`) with session persistence. | Live SSE Streaming (`/run_sse` exists in ADK, unused by frontend) |
 | **Local / Mock / Demo Operation** | ✅ Working | Full local demo flow operating with synthetic benchmark fleet and offline price cache. | Ready to Run Locally |
 | **Real AWS EC2 Discovery** | ✅ AWS CLI Verified | Appends live running EC2 instances via `boto3.client('ec2').describe_instances()` (single region today, placeholder utilization figures rather than live CloudWatch). | Wire discovery-time CPU/Mem to CloudWatch |
@@ -73,7 +74,7 @@ Based on the status matrix above, here are the key areas where you can make imme
     - IAM Execution Roles with least-privilege policies (as specified in [`AWS_DEPLOYMENT_PLAN.md`](./AWS_DEPLOYMENT_PLAN.md)).
     - AWS Secrets Manager secrets for `GEMINI_API_KEY`, `CLIMATIQ_API_KEY`, and `CO2OPS_API_KEY`.
   - **Automated CI/CD Workflows**: Add GitHub Actions workflows (`.github/workflows/ci.yml`) to:
-    - Run the full test suite (`pytest tests/`, currently 52 tests) on every Pull Request.
+    - Run the full test suite (`pytest tests/`, currently 71 tests) on every Pull Request.
     - Run Python code linters (`ruff` / `flake8`) and formatters (`black`).
     - Build multi-arch Docker containers (`linux/amd64`, `linux/arm64`) and publish to Amazon ECR.
   - **Scheduled Telemetry Cron**: Deploy and test the AWS SAM template [`aws_lambda/template.yaml`](./aws_lambda/template.yaml) with Amazon EventBridge for automated daily snapshot ingestion.

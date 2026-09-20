@@ -13,6 +13,13 @@ Parameters:
     Type: String
     Default: co2ops-aws-metrics
     Description: S3 Bucket to store daily EC2 metric snapshots
+  ReportsBucketName:
+    Type: String
+    Default: co2ops-aws-reports
+    Description: >
+      Existing S3 bucket (created per AWS_DEPLOYMENT_PLAN.md Step 3) where the
+      audit pipeline below also writes its results. Not created by this template -
+      referenced by name only, since the main app already owns its lifecycle.
 
 Resources:
   MetricsBucket:
@@ -48,7 +55,179 @@ Resources:
             Name: CO2OpsDailySnapshotTrigger
             Description: Triggers daily EC2 metric snapshot ingestion at midnight UTC
 
+  # ===========================================================================
+  # Automated Fleet Audit Pipeline
+  # API Gateway -> SQS -> Step Functions (Lambda x3) -> SNS + S3
+  #
+  # A second, asynchronous way to run a fleet audit besides chatting with the
+  # Gemini-backed agent: POST /audit kicks off a job, GET /audit/{job_id} polls
+  # it, and anyone subscribed to the SNS topic gets a plain-text summary the
+  # moment it finishes. See aws_lambda/audit_pipeline/README.md for the design
+  # notes and how to test/deploy this independently of the main app stack.
+  # ===========================================================================
+
+  AuditDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: co2ops-audit-dlq
+      MessageRetentionPeriod: 1209600 # 14 days - long enough to investigate before it's lost
+
+  AuditRequestQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: co2ops-audit-requests
+      VisibilityTimeout: 60
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AuditDeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+  AuditAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: co2ops-audit-alerts
+      DisplayName: CO2Ops Audit Results
+
+  AuditApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: CO2OpsAuditApi
+      StageName: prod
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: CO2OpsAuditUsagePlan
+          Throttle:
+            RateLimit: 5
+            BurstLimit: 10
+
+  ScoutFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: audit_pipeline/
+      Handler: scout_step.lambda_handler
+      Timeout: 30
+
+  RecommendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: audit_pipeline/
+      Handler: recommend_step.lambda_handler
+      Timeout: 30
+
+  NotifyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: audit_pipeline/
+      Handler: notify_step.lambda_handler
+      Timeout: 30
+      Environment:
+        Variables:
+          AUDIT_TOPIC_ARN: !Ref AuditAlertsTopic
+          AWS_REPORTS_BUCKET: !Ref ReportsBucketName
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt AuditAlertsTopic.TopicName
+        - S3CrudPolicy:
+            BucketName: !Ref ReportsBucketName
+
+  AuditStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: CO2OpsAuditPipeline
+      DefinitionUri: audit_pipeline/state_machine.asl.json
+      DefinitionSubstitutions:
+        ScoutFunctionArn: !GetAtt ScoutFunction.Arn
+        RecommendFunctionArn: !GetAtt RecommendFunction.Arn
+        NotifyFunctionArn: !GetAtt NotifyFunction.Arn
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ScoutFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref RecommendFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref NotifyFunction
+
+  SubmitAuditFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: audit_pipeline/
+      Handler: submit_audit.lambda_handler
+      Timeout: 15
+      Environment:
+        Variables:
+          AUDIT_QUEUE_URL: !Ref AuditRequestQueue
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt AuditRequestQueue.QueueName
+      Events:
+        SubmitAudit:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AuditApi
+            Path: /audit
+            Method: post
+
+  ProcessQueueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: audit_pipeline/
+      Handler: process_queue.lambda_handler
+      Timeout: 30
+      Environment:
+        Variables:
+          STATE_MACHINE_ARN: !Ref AuditStateMachine
+      Policies:
+        - StepFunctionsExecutionPolicy:
+            StateMachineName: !GetAtt AuditStateMachine.Name
+      Events:
+        QueueTrigger:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt AuditRequestQueue.Arn
+            BatchSize: 1
+
+  GetAuditStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: audit_pipeline/
+      Handler: get_audit_status.lambda_handler
+      Timeout: 15
+      Environment:
+        Variables:
+          STATE_MACHINE_ARN: !Ref AuditStateMachine
+          AWS_REPORTS_BUCKET: !Ref ReportsBucketName
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: states:DescribeExecution
+              Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:${AuditStateMachine.Name}:*"
+        - S3ReadPolicy:
+            BucketName: !Ref ReportsBucketName
+      Events:
+        GetAuditStatus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AuditApi
+            Path: /audit/{job_id}
+            Method: get
+
 Outputs:
   SnapshotFunctionArn:
     Description: ARN of the Daily Snapshot Lambda Function
     Value: !GetAtt DailySnapshotFunction.Arn
+  AuditApiUrl:
+    Description: >
+      Base URL for the audit pipeline API. POST {this}/audit to start a job,
+      GET {this}/audit/{job_id} to check it. Requires the x-api-key header -
+      see aws_lambda/audit_pipeline/README.md for how to retrieve the generated key.
+    Value: !Sub "https://${AuditApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  AuditApiId:
+    Description: API Gateway REST API ID - use this to look up the generated API key
+    Value: !Ref AuditApi
+  AuditAlertsTopicArn:
+    Description: Subscribe an email or SMS endpoint here (SNS Console) to receive audit results
+    Value: !Ref AuditAlertsTopic
+  AuditStateMachineArn:
+    Description: ARN of the Step Functions state machine that orchestrates each audit job
+    Value: !Ref AuditStateMachine

@@ -86,7 +86,7 @@ The architecture is built on the **Google Agent Development Kit (ADK)** with spe
 CO2Ops includes a comprehensive automated test suite in `tests/` covering every migrated AWS component:
 
 ```bash
-# Run the entire test suite (52 tests)
+# Run the entire test suite (71 tests)
 python -m pytest tests/ -v
 ```
 
