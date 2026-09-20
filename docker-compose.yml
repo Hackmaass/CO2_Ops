@@ -10,8 +10,8 @@ services:
       - "8080:8080"
     environment:
       - AWS_DEFAULT_REGION=us-east-1
-      - AWS_METRICS_BUCKET=co2ops-metrics-storage
-      - AWS_REPORTS_BUCKET=co2ops-reports-storage
+      - AWS_METRICS_BUCKET=co2ops-aws-metrics
+      - AWS_REPORTS_BUCKET=co2ops-aws-reports
       - CLIMATIQ_API_KEY=${CLIMATIQ_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
@@ -19,6 +19,8 @@ services:
       - SAGEMAKER_REGION=${SAGEMAKER_REGION:-us-east-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - CO2OPS_API_KEY=${CO2OPS_API_KEY:?Set CO2OPS_API_KEY in your .env - the backend refuses all requests without it}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8501}
     restart: unless-stopped
 
   frontend:
@@ -30,6 +32,7 @@ services:
       - "8501:8501"
     environment:
       - CO2OPS_API_URL=http://backend:8080
+      - CO2OPS_API_KEY=${CO2OPS_API_KEY:?Set CO2OPS_API_KEY in your .env - the backend refuses all requests without it}
     depends_on:
       - backend
     restart: unless-stopped

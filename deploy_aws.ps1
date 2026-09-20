@@ -98,6 +98,8 @@ Write-Host "     - Port: 8080" -ForegroundColor DarkCyan
 Write-Host "     - Environment Variables:" -ForegroundColor DarkCyan
 Write-Host "         GEMINI_API_KEY=<your_gemini_key>" -ForegroundColor White
 Write-Host "         AWS_DEFAULT_REGION=$AwsRegion" -ForegroundColor White
+Write-Host "         CO2OPS_API_KEY=<a long random secret - REQUIRED, backend refuses all requests without it>" -ForegroundColor White
+Write-Host "         ALLOWED_ORIGINS=<your frontend's real URL, not '*'>" -ForegroundColor White
 Write-Host "         SAGEMAKER_ENDPOINT_NAME=co2ops-load-forecaster  (optional)" -ForegroundColor White
 Write-Host "         SAGEMAKER_REGION=$AwsRegion                     (optional)" -ForegroundColor White
 Write-Host "  3. Service 2 (Frontend):" -ForegroundColor White
@@ -105,4 +107,5 @@ Write-Host "     - Image: $FrontendImageTag" -ForegroundColor DarkCyan
 Write-Host "     - Port: 8501" -ForegroundColor DarkCyan
 Write-Host "     - Environment Variables:" -ForegroundColor DarkCyan
 Write-Host "         CO2OPS_API_URL=<backend_app_runner_url>" -ForegroundColor White
+Write-Host "         CO2OPS_API_KEY=<same value as the backend's CO2OPS_API_KEY>" -ForegroundColor White
 Write-Host "=================================================================`n" -ForegroundColor Cyan

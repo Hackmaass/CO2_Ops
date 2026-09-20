@@ -39,14 +39,53 @@ def is_safe_to_migrate(cpu_forecast: Union[list, str], mem_forecast: Union[list,
     return cpu_avg < 30.0 and mem_avg < 40.0
 
 
-def change_machine_type(instance_id: str, new_machine_type: str, region: str = "us-east-1") -> dict:
+def change_machine_type(
+    instance_id: str,
+    new_machine_type: str,
+    region: str = "us-east-1",
+    force: bool = False,
+) -> dict:
     """
     Safely resizes an AWS EC2 instance by stopping it, modifying its InstanceType, and restarting it.
     Uses AWS EC2 API with automated waiters. Supports dry-run validation.
+
+    SAFETY GATE: this function re-checks forecasted utilization itself before touching the
+    instance. It does NOT trust the calling agent to have already called
+    `is_safe_to_migrate`. This is intentional — the LLM's instructions can be skipped,
+    ignored, or manipulated, so the actual guard has to live in code, not in a prompt.
+    Pass `force=True` to explicitly override this (e.g. user insists after being warned).
     """
     instance_id = instance_id.strip().strip('"').strip("'")
     new_machine_type = new_machine_type.strip().strip('"').strip("'").lower()
     region = os.getenv("AWS_DEFAULT_REGION", region)
+
+    # --- Code-enforced safety gate (independent of what the agent claims it already checked) ---
+    if not force:
+        try:
+            forecast = get_forecast_information(instance_id)
+            safe = is_safe_to_migrate(
+                forecast.get("CPU Forecast", []),
+                forecast.get("Memory Forecast", []),
+            )
+        except Exception as e:
+            logger.warning(f"Could not verify forecast safety for {instance_id}: {e}")
+            safe = False
+
+        if not safe:
+            logger.warning(
+                f"BLOCKED: migration of {instance_id} to {new_machine_type} "
+                f"failed the code-enforced safety check (forecast utilization too high)."
+            )
+            return {
+                "status": "blocked",
+                "instance_id": instance_id,
+                "new_machine_type": new_machine_type,
+                "message": (
+                    f"Migration of {instance_id} to {new_machine_type} was blocked: "
+                    "forecasted CPU/Memory utilization is too high to safely resize right now. "
+                    "Re-run with force=True only if you have manually confirmed this is safe."
+                ),
+            }
 
     logger.info(f"Initiating EC2 migration: {instance_id} -> {new_machine_type} in {region}")
 

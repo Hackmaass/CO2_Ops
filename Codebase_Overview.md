@@ -26,7 +26,7 @@ The architecture is built on the **Google Agent Development Kit (ADK)** with spe
                                         │ REST / SSE
                           ┌─────────────▼─────────────┐
                           │   co2ops_agent (Root)     │
-                          │  Gemini 2.0 Flash / ADK   │
+                          │  Gemini 2.5 Flash / ADK   │
                           └─────────────┬─────────────┘
          ┌──────────────────┬───────────┴───────────┬───────────────────┐
          ▼                  ▼                       ▼                   ▼
@@ -57,7 +57,7 @@ The architecture is built on the **Google Agent Development Kit (ADK)** with spe
   - `infra_recommender`: Packages findings into prioritised rightsizing recommendations.
 - **`forecasting_tool_agent`**:
   - Pulls 14-day history from **Amazon CloudWatch** (with high-precision simulated fallback).
-  - Fits dynamic **statsmodels ARIMA(1, 0, 0)** time-series models to forecast 7-day CPU utilization, memory, and carbon emissions.
+  - Tries an **Amazon SageMaker AI** endpoint first (if `SAGEMAKER_ENDPOINT_NAME` is set), falling back automatically to **statsmodels ARIMA(1, 0, 0)** — either way it forecasts 7-day CPU utilization, memory, and carbon emissions, and reports which engine actually ran.
 - **`impact_calculator_agent`**:
   - Calculates real-time cost deltas querying the **AWS Pricing API** (`boto3.client('pricing')`) with a verified local EC2 on-demand price index fallback.
   - Calculates carbon footprint using the **Climatiq AWS Instance Batch API** (`/compute/v1/aws/instance/batch`) with regional carbon intensity models.
@@ -86,7 +86,7 @@ The architecture is built on the **Google Agent Development Kit (ADK)** with spe
 CO2Ops includes a comprehensive automated test suite in `tests/` covering every migrated AWS component:
 
 ```bash
-# Run the entire test suite (46 tests)
+# Run the entire test suite (52 tests)
 python -m pytest tests/ -v
 ```
 

@@ -1,10 +1,12 @@
 # CO2Ops - Local Development Runner
-# Launches the AWS-migrated ADK Backend on port 8080 and Custom Frontend on port 8501.
+# Launches the authenticated CO2Ops Backend (co2ops_agent/server.py) on port 8080
+# and the Streamlit Frontend on port 8501.
 
 $VenvDir = Join-Path $PSScriptRoot ".venv"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
-$VenvAdk = Join-Path $VenvDir "Scripts\adk.exe"
 $VenvStreamlit = Join-Path $VenvDir "Scripts\streamlit.exe"
+$ServerScript = Join-Path $PSScriptRoot "co2ops_agent\server.py"
+$EnvFile = Join-Path $PSScriptRoot ".env"
 
 if (-not (Test-Path $VenvPython)) {
     Write-Host "Creating Virtual Environment at $VenvDir..." -ForegroundColor Cyan
@@ -18,14 +20,22 @@ Write-Host "Ensuring dependencies are installed..." -ForegroundColor Cyan
 & $VenvPython -m pip install -q -r (Join-Path $PSScriptRoot "co2ops_agent\requirements.txt")
 & $VenvPython -m pip install -q -r (Join-Path $PSScriptRoot "Frontend\requirements.txt")
 
+if (-not (Test-Path $EnvFile)) {
+    Write-Host "`nNo .env file found at $EnvFile." -ForegroundColor Red
+    Write-Host "Copy .env.example to .env and set GEMINI_API_KEY and CO2OPS_API_KEY first -" -ForegroundColor Red
+    Write-Host "the backend refuses all requests until CO2OPS_API_KEY is set." -ForegroundColor Red
+}
+
 $env:PYTHONIOENCODING = "utf-8"
 
-Write-Host "`nStarting ADK Backend Server on http://127.0.0.1:8080..." -ForegroundColor Yellow
+Write-Host "`nStarting CO2Ops Backend (authenticated) on http://127.0.0.1:8080..." -ForegroundColor Yellow
 $BackendJob = Start-Job -Name "CO2Ops_Backend" -ScriptBlock {
-    param($AgentPath, $AdkExe)
+    param($ServerScript, $PythonExe)
     $env:PYTHONIOENCODING = "utf-8"
-    & $AdkExe api_server --port 8080 --host 127.0.0.1 --allow_origins "*" --auto_create_session $AgentPath
-} -ArgumentList (Join-Path $PSScriptRoot "co2ops_agent"), $VenvAdk
+    $env:HOST = "127.0.0.1"
+    $env:PORT = "8080"
+    & $PythonExe $ServerScript
+} -ArgumentList $ServerScript, $VenvPython
 
 Start-Sleep -Seconds 3
 

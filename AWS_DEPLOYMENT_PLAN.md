@@ -24,26 +24,26 @@ This document outlines the blueprint and step-by-step plan for deploying **CO2Op
       | Streamlit App    |----------------------->| Google ADK Agent |
       | Workspace UI     |                        | Multi-Agent Core |
       +------------------+                        +---+----------+---+
-                                                      |          |
+                                                       |          |
          +---------------------+----------------------+          v
-         |                     |                       +-------------------+
-         v                     v                       |  Amazon SageMaker |
-  +--------------+      +---------------+              |  AI Endpoint      |
-  | AWS EC2 APIs |      | Climatiq AWS  |              |  (DeepAR / ARIMA) |
-  | (Describe/   |      | Emissions API |              +-------------------+
-  |  Modify)     |      +---------------+                        |
-  +-------+------+                                               v
-          |                                            +-------------------+
-          v                                            |  AWS Secrets      |
-  +--------------+                                     |  Manager / SSM    |
-  |  CloudWatch  |                                     +-------------------+
-  |  Telemetry   |                                               |
-  +-------+------+                                               v
-          |                                            +-------------------+
-          v                                            |  Amazon S3        |
-  +--------------+                                     | (Reports & Slides)|
-  | AWS Lambda + |                                     +-------------------+
-  | EventBridge  |
+         |                     |                       +----------------------+
+         v                     v                       |  Amazon SageMaker AI |
+  +--------------+      +---------------+              |  Endpoint (optional; |
+  | AWS EC2 APIs |      | Climatiq AWS  |              |  linear-trend model, |
+  | (Describe/   |      | Emissions API |              |  ARIMA fallback)     |
+  |  Modify)     |      +---------------+              +----------------------+
+  +-------+------+                                               |
+          |                                                      v
+          v                                            +-------------------+
+  +--------------+                                     |  AWS Secrets      |
+  |  CloudWatch  |                                     |  Manager / SSM    |
+  |  Telemetry   |                                     +-------------------+
+  +-------+------+                                               |
+          |                                                      v
+          v                                            +-------------------+
+  +--------------+                                     |  Amazon S3        |
+  | AWS Lambda + |                                     | (Reports & Slides)|
+  | EventBridge  |                                     +-------------------+
   +--------------+
 ```
 
@@ -109,8 +109,8 @@ Create an IAM Role `CO2OpsExecutionRole` for the backend service with the follow
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::co2ops-sustainability-reports",
-        "arn:aws:s3:::co2ops-sustainability-reports/*"
+        "arn:aws:s3:::co2ops-aws-reports",
+        "arn:aws:s3:::co2ops-aws-reports/*"
       ]
     },
     {
@@ -119,7 +119,10 @@ Create an IAM Role `CO2OpsExecutionRole` for the backend service with the follow
       "Action": [
         "secretsmanager:GetSecretValue"
       ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:CLIMATIQ_API_KEY*"
+      "Resource": [
+        "arn:aws:secretsmanager:*:*:secret:CLIMATIQ_API_KEY*",
+        "arn:aws:secretsmanager:*:*:secret:GEMINI_API_KEY*"
+      ]
     },
     {
       "Sid": "SageMakerInvokeAccess",
@@ -146,13 +149,24 @@ aws secretsmanager create-secret \
     --region us-east-1
 ```
 
+Do the same for the Gemini key. `secrets_access_manager.py` already checks Secrets Manager
+as a fallback whenever an env var isn't set, so there's no code change needed here - just
+don't put the raw key in App Runner's environment variables directly:
+```bash
+aws secretsmanager create-secret \
+    --name "GEMINI_API_KEY" \
+    --description "Gemini API Key for CO2Ops agent" \
+    --secret-string "YOUR_GEMINI_KEY" \
+    --region us-east-1
+```
+
 ---
 
 ## 4. Step 3: Amazon S3 Bucket Creation
 
 Create the bucket used by `@summary_generator_agent` and `@presentation_generator_agent` to store weekly markdown reports and PowerPoint slides:
 ```bash
-aws s3 mb s3://co2ops-sustainability-reports --region us-east-1
+aws s3 mb s3://co2ops-aws-reports --region us-east-1
 ```
 
 ---
@@ -191,6 +205,9 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/co2ops-backend:late
    - Environment variables:
      - `AWS_DEFAULT_REGION`: `us-east-1`
      - `GEMINI_API_KEY`: *(Your Gemini API key)*
+     - `CO2OPS_API_KEY`: *(a long random secret — **required**; the backend refuses every request without it, see `server.py`)*
+     - `ALLOWED_ORIGINS`: *(your frontend's real URL once you have it; don't leave this as `*` in production)*
+     - `SAGEMAKER_ENDPOINT_NAME`: *(optional — leave unset to use the local ARIMA fallback)*
 4. Click **Deploy**. App Runner provides a live HTTPS URL (e.g. `https://xxx.us-east-1.awsapprunner.com`).
 
 ### Option B: AWS ECS Fargate
@@ -204,19 +221,29 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/co2ops-backend:late
 
 ### Option A: Static Landing Page & Web Workspace on Amazon S3 + CloudFront
 1. Build static bundle in `Frontend/` (`index.html`, `workspace.html`, `style.css`, `main.js`).
-2. Sync files to S3 bucket:
+2. **Create `Frontend/env.js` manually before syncing.** `entrypoint.sh` (which generates this from `env.js.template` via `envsubst`) isn't part of the current Docker image's build (that image runs Streamlit), and a plain S3 sync doesn't run it either — without this step `window.CO2OPS_API_KEY` is undefined and the backend rejects every request with 401:
+   ```bash
+   cat > Frontend/env.js <<EOF
+   window.CO2OPS_API_URL = "https://xxx.us-east-1.awsapprunner.com";
+   window.CO2OPS_API_KEY = "<same CO2OPS_API_KEY you set on the backend>";
+   EOF
+   ```
+   Treat this file like any other secret — it ships to every visitor's browser, so it only keeps out casual scanners, not real per-user auth.
+3. Sync files to S3 bucket:
    ```bash
    aws s3 sync Frontend/ s3://co2ops-frontend-web --exclude "app.py" --exclude "*.woff2"
    ```
-3. Attach an **Amazon CloudFront Distribution** pointing to the S3 bucket with HTTPS.
+4. Attach an **Amazon CloudFront Distribution** pointing to the S3 bucket with HTTPS.
 
-### Option B: Streamlit Workspace on ECS / App Runner
+### Option B: Streamlit Workspace on ECS / App Runner (what `deploy_aws.sh`/`deploy_aws.ps1` build)
 1. If using the Streamlit workspace (`Frontend/app.py`):
    ```bash
    docker build -t co2ops-frontend -f Frontend/Dockerfile .
    docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/co2ops-frontend:latest
    ```
-2. Deploy container to App Runner on port `8501`.
+2. Deploy container to App Runner on port `8501`, with environment variables:
+   - `CO2OPS_API_URL`: *(your backend's URL from Step 5)*
+   - `CO2OPS_API_KEY`: *(same value as the backend's `CO2OPS_API_KEY`)*
 
 ---
 
@@ -264,13 +291,12 @@ We provide automated deployment scripts that build and push both containers to A
 
 ## 11. Verification & Cutover Checklist
 
-- [ ] Verify backend health: `GET https://<app-runner-url>/`
+- [ ] Verify backend health: `GET https://<app-runner-url>/` (public, no API key needed)
+- [ ] Verify auth is actually enforced: `POST /run` **without** an `X-API-Key` header should return `401` (or `503` if `CO2OPS_API_KEY` isn't set at all — fix that first)
 - [ ] Verify Streamlit frontend: open `https://<frontend-app-runner-url>`
-- [ ] Verify session creation: `POST /apps/co2ops_agent/users/test/sessions/test-1`
-- [ ] Send test prompt: *"Audit EC2 instances in us-east-1"*
+- [ ] Verify session creation **with** the header: `POST /apps/co2ops_agent/users/test/sessions/test-1 -H "X-API-Key: <your key>"`
+- [ ] Send test prompt (same header): *"Audit EC2 instances in us-east-1"*
 - [ ] Confirm `@forecasting_tool_agent` queries SageMaker (or local fallback)
 - [ ] Confirm `@optimization_advisor` returns recommendations
 - [ ] Test safe execution workflow with test EC2 instance
-- [ ] Confirm executive summary uploaded to S3 bucket `co2ops-sustainability-reports`
-- [ ] Test safe execution workflow with test EC2 instance
-- [ ] Confirm executive summary uploaded to S3 bucket `co2ops-sustainability-reports`
+- [ ] Confirm executive summary uploaded to S3 bucket `co2ops-aws-reports`

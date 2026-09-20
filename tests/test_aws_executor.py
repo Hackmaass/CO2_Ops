@@ -39,16 +39,40 @@ def test_get_forecast_information():
     assert len(info["Memory Forecast"]) == 7
     assert len(info["Dates"]) == 7
 
-def test_change_machine_type_simulated_fallback():
-    # Without real AWS credentials, verifies graceful simulated execution
+SAFE_FORECAST = {
+    "CPU Forecast": [15.0] * 7,
+    "Memory Forecast": [25.0] * 7,
+    "Dates": [f"2026-01-{i:02d}" for i in range(1, 8)],
+}
+
+UNSAFE_FORECAST = {
+    "CPU Forecast": [80.0] * 7,
+    "Memory Forecast": [90.0] * 7,
+    "Dates": [f"2026-01-{i:02d}" for i in range(1, 8)],
+}
+
+
+@patch(
+    "co2ops_agent.agents.safe_executor_agent.tools.get_forecast_information",
+    return_value=SAFE_FORECAST,
+)
+def test_change_machine_type_simulated_fallback(mock_forecast):
+    # Without real AWS credentials, verifies graceful simulated execution.
+    # The instance's forecast is mocked safe so this test stays focused on the
+    # execution/fallback path rather than the safety gate (see the dedicated
+    # blocked/force tests below for that).
     result = change_machine_type("i-test12345678", "t3.medium", "us-east-1")
     assert result["status"] == "success"
     assert result["instance_id"] == "i-test12345678"
     assert result["new_machine_type"] == "t3.medium"
     assert "message" in result
 
+@patch(
+    "co2ops_agent.agents.safe_executor_agent.tools.get_forecast_information",
+    return_value=SAFE_FORECAST,
+)
 @patch("boto3.client")
-def test_change_machine_type_mocked_live(mock_boto):
+def test_change_machine_type_mocked_live(mock_boto, mock_forecast):
     mock_ec2 = MagicMock()
     mock_waiter = MagicMock()
     mock_ec2.get_waiter.return_value = mock_waiter
@@ -67,3 +91,31 @@ def test_change_machine_type_mocked_live(mock_boto):
         InstanceType={"Value": "m5.large"}
     )
     mock_ec2.start_instances.assert_called_once_with(InstanceIds=["i-0abc123def456"])
+
+
+@patch(
+    "co2ops_agent.agents.safe_executor_agent.tools.get_forecast_information",
+    return_value=UNSAFE_FORECAST,
+)
+def test_change_machine_type_blocked_when_forecast_unsafe(mock_forecast):
+    # Code-enforced safety gate: change_machine_type must refuse on its own
+    # when forecasted utilization is too high, regardless of what the calling
+    # agent believes it already checked.
+    result = change_machine_type("i-unsafe-instance", "t3.medium", "us-east-1")
+    assert result["status"] == "blocked"
+    assert result["instance_id"] == "i-unsafe-instance"
+    mock_forecast.assert_called_once()
+
+
+@patch(
+    "co2ops_agent.agents.safe_executor_agent.tools.get_forecast_information",
+    return_value=UNSAFE_FORECAST,
+)
+def test_change_machine_type_force_bypasses_gate(mock_forecast):
+    # force=True is an explicit, deliberate override of the safety gate
+    # (e.g. after the user acknowledges the risk) and must skip it entirely.
+    result = change_machine_type(
+        "i-unsafe-instance", "t3.medium", "us-east-1", force=True
+    )
+    assert result["status"] != "blocked"
+    mock_forecast.assert_not_called()

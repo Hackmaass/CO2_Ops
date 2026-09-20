@@ -1158,6 +1158,24 @@ button, input {
   margin-left: auto;
 }
 
+/* Lights up while that sub-agent is the one handling the current request */
+.swarm-item.active-agent {
+  background: rgba(120, 86, 255, 0.16);
+  border: 1px solid rgba(120, 86, 255, 0.5);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(120, 86, 255, 0.25);
+}
+
+.swarm-item.active-agent .badge-dot {
+  background: #7856ff;
+  animation: agentPulse 1s infinite ease-in-out;
+}
+
+@keyframes agentPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.6); opacity: 0.6; }
+}
+
 .quick-chips {
   display: flex;
   flex-direction: column;

@@ -14,6 +14,8 @@ safe_executor_agent = LlmAgent(
     1. **Forecast CPU and Memory**: Call `get_forecast_information(instance_id)` to get the 7-day forecast for CPU and Memory.
     2. **Decide if migration is safe**: Call `is_safe_to_migrate(cpu_forecast, memory_forecast)`.
     3. **Migrate the Machine Type**: If the decision is safe, call `change_machine_type(instance_id, target_instance_type)` to resize the EC2 instance.
+       Note: `change_machine_type` re-verifies safety itself and will refuse (status "blocked") if utilization is too high,
+       even if you believe it is safe. Do not pass `force=True` unless the user has explicitly acknowledged the risk.
     4. If unsafe (utilization too high): Warn the user and do not proceed with the change.
 
     Always report the result clearly, including instance ID, old type, new type, and safety status.

@@ -2,7 +2,7 @@
 
 Please see our comprehensive [contributions.md](./contributions.md) guide for:
 - 📊 Current Status Matrix (matching our roadmap)
-- 🎯 Priority Workstreams & What Work is Needed (Bedrock inference, CloudWatch E2E, AWS mutation validation, public deployment)
+- 🎯 Priority Workstreams & What Work is Needed (executor rollback, CloudWatch E2E, AWS mutation validation, public deployment)
 - 🛠️ Local Development & Setup Instructions
 - 📐 Contribution Guidelines & Architecture Principles
 - 🔄 Pull Request Workflow

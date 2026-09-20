@@ -1,6 +1,6 @@
 # Contributing to CO2Ops 🌱
 
-Welcome to the **CO2Ops** open-source project! We are building an autonomous, mathematical-safety-guaranteed cloud sustainability and FinOps engine for Amazon Web Services (AWS). CO2Ops continuously audits, forecasts, and rightsizes AWS compute infrastructure to eliminate cloud waste and slash carbon emissions.
+Welcome to the **CO2Ops** open-source project! We are building an autonomous cloud sustainability and FinOps engine for Amazon Web Services (AWS), orchestrated with Google's Agent Development Kit (ADK) and Gemini. CO2Ops continuously audits, forecasts, and rightsizes AWS compute infrastructure to eliminate cloud waste and slash carbon emissions.
 
 Whether you're an AWS cloud architect, AI engineer, FinOps specialist, or frontend developer, we welcome your contributions!
 
@@ -12,16 +12,18 @@ The following status matrix outlines the current verification state of each arch
 
 | Area | Current Status | Description & Verification State | Priority for Contributors |
 |---|:---:|---|:---:|
-| **Backend Python Code** | ✅ Working | Core multi-agent framework, DuckDB analytics, and state management are operational. | Maintenance & Features |
-| **Safety Engine** | ✅ Verified | 6-part deterministic ARIMA safety gate; fails closed on volatility or threshold breach. | High Invariance (Do Not Weaken) |
-| **Executor Logic** | ✅ Verified by Tests | 3-step state machine (`stop` $\to$ `modify` $\to$ `start`) with automated rollback & architecture guards. | Needs Live Validation |
-| **FastAPI / API Layer** | ✅ Existing & Tested | REST endpoints (`/api/chat`, `/api/sessions`, `/run`, `/health`) with in-memory session persistence. | Live SSE Streaming |
+| **Backend Python Code** | ✅ Working | Google ADK multi-agent framework (Gemini), DuckDB analytics. | Maintenance & Features |
+| **Safety Engine** | ✅ Verified by Tests | Average CPU/Mem utilization gate, enforced in code (not just prompt). See Readme's [Mathematical Safety](./Readme.md#-mathematical-safety-the-code-enforced-safety-gate) section for its known limits — it's simpler than "mathematically proven," and contributors should know that going in. | High Invariance (Do Not Weaken) |
+| **Executor Logic** | ⚠️ Partially Verified | 3-step state machine (`stop` → `modify` → `start`) with boto3 waiters; **no automatic rollback yet** on partial failure — see Workstream 1 below. | 🔴 **High Priority** |
+| **Backend Auth** | ✅ Added | `X-API-Key` middleware, fails closed if unset. Current key is a shared static secret, visible in the static frontend's JS — fine for a demo, not for multi-user production. | Needs real per-user auth for prod |
+| **Forecasting Engine** | ✅ Working, Tested | SageMaker AI endpoint (optional) with automatic local ARIMA fallback; response reports which one ran. | Train a real model for the endpoint (`inference.py` is currently a linear-trend placeholder, not a trained model) |
+| **Static Frontend (index.html/workspace.html)** | ⚠️ Not in Docker Image | `Frontend/Dockerfile` currently builds the Streamlit app only — the static pages still work but need to be served separately. | 🟡 Wire them back into the Docker image, or drop them from the repo |
+| **FastAPI / API Layer** | ✅ Existing & Tested | ADK's own REST endpoints (`/apps/.../sessions/{id}`, `/run`, `/health`) with session persistence. | Live SSE Streaming (`/run_sse` exists in ADK, unused by frontend) |
 | **Local / Mock / Demo Operation** | ✅ Working | Full local demo flow operating with synthetic benchmark fleet and offline price cache. | Ready to Run Locally |
-| **Real AWS EC2 Discovery** | ✅ AWS CLI Verified | Queries live running EC2 instances via `boto3.client('ec2').describe_instances()`. | Tested with AWS Credentials |
-| **Real CloudWatch Telemetry** | ⏳ Needs Live E2E Verification | Live metric ingestion implemented in `co2ops_agent/e2e_readonly.py`; requires validation against real active EC2 workloads. | 🔴 **High Priority** |
-| **Real Bedrock Inference** | ❌ Blocked by AWS Restriction | Bedrock client & agent loops ready; requires live AWS account quota and model access approval. | 🔴 **Critical Priority** |
+| **Real AWS EC2 Discovery** | ✅ AWS CLI Verified | Appends live running EC2 instances via `boto3.client('ec2').describe_instances()` (single region today, placeholder utilization figures rather than live CloudWatch). | Wire discovery-time CPU/Mem to CloudWatch |
+| **Real CloudWatch Telemetry** | ⏳ Needs Live E2E Verification | `forecaster_agent` pulls real CloudWatch history when available, with a deterministic synthetic fallback otherwise. Needs validation against real active EC2 workloads. | 🔴 **High Priority** |
 | **Real AWS Mutation** | ❌ Not Yet Validated | Rightsizing state machine tested via mocked boto3; requires validation in live AWS sandbox/staging VPC. | 🔴 **High Priority** |
-| **Public Deployment** | ⏳ Not Deployed | Containerized Docker setup exists; production cloud hosting (App Runner / ECS Fargate + CloudFront) needed. | 🟡 **Medium Priority** |
+| **Public Deployment** | ⏳ Not Deployed | Containerized Docker setup exists (with the auth middleware wired in); production cloud hosting (App Runner / ECS Fargate + CloudFront) needed. | 🟡 **Medium Priority** |
 
 ---
 
@@ -29,49 +31,36 @@ The following status matrix outlines the current verification state of each arch
 
 Based on the status matrix above, here are the key areas where you can make immediate, high-impact contributions:
 
-### 1. 🔴 Real Amazon Bedrock Model Access & Live Inference
-*Current Status: ❌ Currently blocked by AWS account restriction*
+### 1. 🔴 Rollback & Error-Surfacing in the Executor
+*Current Status: ❌ Not implemented*
 
-- **The Problem**: The Bedrock Converse API integration (`BedrockModelClient` and `BedrockAgent`) is completely implemented and passes all unit tests with mocks. However, running against live Bedrock endpoints requires an active AWS account with approved access to Anthropic Claude models.
+- **The Problem**: `change_machine_type()` in [`co2ops_agent/agents/safe_executor_agent/tools.py`](./co2ops_agent/agents/safe_executor_agent/tools.py) has a broad `except Exception` around the whole stop → modify → start sequence that reports back a `"simulated"` result on *any* failure — including one that happens after the instance has already been stopped or resized. There's currently no code path that detects "we're mid-lifecycle and something broke" and attempts to restore the original instance type, and no way to distinguish "we never touched AWS" from "we touched AWS and it went wrong" in the response.
 - **Work Needed**:
-  - **AWS Model Approvals**: Verify model enablement in the AWS Bedrock Console for:
-    - `anthropic.claude-3-5-sonnet-20241022-v2:0` (or `us.anthropic.claude-3-5-sonnet-20241022-v2:0`)
-    - `anthropic.claude-sonnet-4-6`
-  - **Cross-Region Fallback**: Implement dynamic multi-region Bedrock routing (e.g., fallback from `us-east-1` to `us-west-2` or `eu-central-1` if Bedrock model throttling or service quotas occur).
-  - **Multi-Turn Tool Verification**: Execute end-to-end multi-turn conversation traces with live Claude inference to ensure Bedrock's `toolUse` and `toolResult` parsing handles complex nested inputs smoothly.
-  - **Streaming Token Response**: Integrate AWS Bedrock `ConverseStream` API with FastAPI Server-Sent Events (SSE) or WebSockets to deliver typewriter-style streaming responses to the frontend.
+  - **Distinct failure states**: separate "never attempted" / "partial failure, needs manual attention" / "simulated (no AWS creds)" into different `status` values instead of collapsing them all into `"simulated"`.
+  - **Real rollback**: if `modify_instance_attribute` or the final `start_instances` fails after the instance was stopped, attempt to restart it with its *original* instance type and surface that outcome explicitly.
+  - **Architecture cross-check**: there's currently no check preventing a direct `x86_64` → `arm64` (Graviton) resize, which can leave an instance unable to boot. Worth adding before this is used against anything real.
 
-### 2. 🔴 Real CloudWatch Telemetry Live E2E Verification
+### 2. 🔴 Real CloudWatch Telemetry, Live E2E Verification
 *Current Status: ⏳ Needs live E2E verification*
 
-- **The Problem**: A dedicated read-only end-to-end runner exists in [`co2ops_agent/e2e_readonly.py`](file:///d:/Projects/CO2Ops/co2ops_agent/e2e_readonly.py), and all unit tests pass with mocked CloudWatch metrics. We need live validation against a real AWS account with running EC2 instances emitting actual CloudWatch telemetry.
+- **The Problem**: `forecaster_agent.fetch_cloudwatch_history()` pulls real CloudWatch metrics when available and falls back to a deterministic, instance-ID-seeded synthetic baseline otherwise (see `generate_baseline_history()`). All unit tests currently exercise the synthetic path. We need live validation against a real AWS account with running EC2 instances emitting actual CloudWatch telemetry.
 - **Work Needed**:
-  - **Live Verification Run**: Run `python -m co2ops_agent.e2e_readonly` against an AWS account with active EC2 workloads and document the outputs.
-  - **Provenance Guarantee Validation**: Confirm that when real CloudWatch metrics return $>0$ datapoints, the telemetry provenance flag accurately transitions from `demo` to `verified_live` and the deterministic safety gate evaluates properly.
-  - **Handling Sparse Telemetry**: Improve handling of newly launched EC2 instances that have fewer than the required 5 historical CloudWatch datapoints (ensuring clear, user-friendly diagnostic logs).
-  - **Extended Metric Collection**: Expand telemetry collection beyond CPU utilization to include:
-    - Memory utilization (via AWS CloudWatch Agent metrics `mem_used_percent`).
-    - EBS volume IOPS and throughput (`VolumeReadOps`, `VolumeWriteOps`).
-    - Network interface traffic (`NetworkIn`, `NetworkOut`).
+  - **Live Verification Run**: exercise `forecaster_agent.generate_aws_forecast()` against an AWS account with active EC2 workloads and document the outputs (real vs. synthetic history).
+  - **Surface data provenance**: right now nothing in the response tells the caller whether a forecast came from real CloudWatch history or the synthetic fallback — worth adding so the safety gate's "safe" verdict can be trusted appropriately.
+  - **Wire discovery-time utilization to CloudWatch too**: `infra_scout_agent.get_server_dataframe()` currently gives any live EC2 instance it finds placeholder utilization figures (`18.0` / `32.0`) instead of a real CloudWatch lookup — only the forecaster does the real fetch today.
+  - **Extended Metric Collection**: expand telemetry beyond CPU utilization to include memory (`mem_used_percent` via the CloudWatch Agent), EBS IOPS/throughput, and network traffic.
 
 ### 3. 🔴 Real AWS Mutation Validation in Sandbox
 *Current Status: ❌ Not yet validated on live infrastructure*
 
-- **The Problem**: The safe executor state machine in [`co2ops_agent/agents/safe_executor_agent/tools.py`](file:///d:/Projects/CO2Ops/co2ops_agent/agents/safe_executor_agent/tools.py) implements a hardened 3-step lifecycle:
-  1. Verify instance state and CPU architecture (`x86_64` vs `arm64`).
-  2. Safely stop the instance with boto3 waiters (`instance_stopped`).
-  3. Modify the machine type attribute (`modify_instance_attribute`) and restart (`instance_running`).
-  4. Automatically rollback and restore original running state if any modification error occurs.
-  *This logic has been thoroughly tested via mocks and unit tests, but has not yet been executed on real live AWS instances.*
+- **The Problem**: The safe executor state machine in [`co2ops_agent/agents/safe_executor_agent/tools.py`](./co2ops_agent/agents/safe_executor_agent/tools.py) implements a 3-step lifecycle — stop (with `instance_stopped` waiter) → modify instance type → start (with `instance_running` waiter) — plus the code-enforced average-utilization safety gate described in the Readme. It does **not** currently do an architecture compatibility check or an automatic rollback (see Workstream 1). *This logic is tested via mocks and unit tests, but has not yet been executed against real live AWS instances.*
 - **Work Needed**:
-  - **Dedicated Sandbox Validation**: Spin up a throwaway AWS EC2 test instance (e.g., `t3.nano` or `t3.micro` in a sandbox VPC) and validate the complete live execution flow:
+  - **Dedicated Sandbox Validation**: spin up a throwaway AWS EC2 test instance (e.g., `t3.nano` or `t3.micro` in a sandbox VPC) and validate the complete live execution flow:
     ```bash
-    # Safe execution test on test instance
     python -c "from co2ops_agent.agents.safe_executor_agent.tools import change_machine_type; print(change_machine_type('i-testinstanceid', 't3.small'))"
     ```
-  - **Failure Rollback Injection**: Test transient network failure or IAM permission denial midway through execution to confirm that the instance is safely restarted and never left in an unrecoverable stopped state.
-  - **EBS vs NVMe Compatibility**: Verify compatibility with instance storage types and Nitro-based hypervisor constraints when resizing across instance generations (e.g., `t2` $\to$ `t3`, `m4` $\to$ `m5`).
-  - **Architectural Cross-Check Enforcement**: Validate that when attempting to resize an `x86_64` instance directly to an `arm64` Graviton target (`m6g.large`), the executor cleanly blocks the command with an informative architecture warning.
+  - **Failure Injection**: test a transient network failure or IAM permission denial midway through execution — today this would report `"simulated"` rather than clearly flagging that the instance may be stopped in an inconsistent state. This is exactly the gap Workstream 1 is about.
+  - **EBS vs NVMe Compatibility**: verify compatibility with instance storage types and Nitro-based hypervisor constraints when resizing across instance generations (e.g., `t2` → `t3`, `m4` → `m5`).
 
 ### 4. 🟡 Public Deployment & Infrastructure as Code (IaC)
 *Current Status: ⏳ Not deployed*
@@ -81,13 +70,13 @@ Based on the status matrix above, here are the key areas where you can make imme
   - **Terraform / AWS CDK Modules**: Author IaC scripts that stand up:
     - AWS App Runner or ECS Fargate cluster for containerized backend execution.
     - S3 Bucket with CloudFront CDN distribution for static landing page & workspace hosting.
-    - IAM Execution Roles with least-privilege policies (as specified in [`AWS_DEPLOYMENT_PLAN.md`](file:///d:/Projects/CO2Ops/AWS_DEPLOYMENT_PLAN.md)).
-    - AWS Secrets Manager secret for Climatiq API key.
+    - IAM Execution Roles with least-privilege policies (as specified in [`AWS_DEPLOYMENT_PLAN.md`](./AWS_DEPLOYMENT_PLAN.md)).
+    - AWS Secrets Manager secrets for `GEMINI_API_KEY`, `CLIMATIQ_API_KEY`, and `CO2OPS_API_KEY`.
   - **Automated CI/CD Workflows**: Add GitHub Actions workflows (`.github/workflows/ci.yml`) to:
-    - Run the complete 194-test suite on every Pull Request.
+    - Run the full test suite (`pytest tests/`, currently 52 tests) on every Pull Request.
     - Run Python code linters (`ruff` / `flake8`) and formatters (`black`).
     - Build multi-arch Docker containers (`linux/amd64`, `linux/arm64`) and publish to Amazon ECR.
-  - **Scheduled Telemetry Cron**: Deploy and test the AWS SAM template [`aws_lambda/template.yaml`](file:///d:/Projects/CO2Ops/aws_lambda/template.yaml) with Amazon EventBridge for automated daily snapshot ingestion.
+  - **Scheduled Telemetry Cron**: Deploy and test the AWS SAM template [`aws_lambda/template.yaml`](./aws_lambda/template.yaml) with Amazon EventBridge for automated daily snapshot ingestion.
 
 ### 5. 🟢 Frontend & User Experience Enhancements
 *Current Status: ✅ Working locally, opportunities for polish*
@@ -111,8 +100,8 @@ To start contributing code locally:
 
 ### 2. Fork & Clone
 ```bash
-git clone https://github.com/<your-username>/GreenOps.git
-cd GreenOps
+git clone https://github.com/<your-username>/CO2_Ops.git
+cd CO2_Ops
 ```
 
 ### 3. Create Virtual Environment & Install Dependencies
@@ -135,14 +124,15 @@ Copy the example environment configuration:
 ```bash
 cp co2ops_agent/.env.example co2ops_agent/.env
 ```
-Edit `co2ops_agent/.env`:
+Edit `co2ops_agent/.env` — at minimum you need:
 ```ini
+GEMINI_API_KEY=your_gemini_api_key_here
+CO2OPS_API_KEY=replace_with_a_long_random_secret
 AWS_DEFAULT_REGION=us-east-1
 AWS_REGION=us-east-1
-BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
 CLIMATIQ_API_KEY=your_key_here
 ```
-*(Note: If you do not have live AWS credentials, CO2Ops operates seamlessly with built-in mock telemetry and cached pricing data).*
+*(Note: If you do not have live AWS credentials, CO2Ops operates seamlessly with built-in mock telemetry and cached pricing data. The backend will refuse all requests if `CO2OPS_API_KEY` isn't set — see [`server.py`](./co2ops_agent/server.py).)*
 
 ### 5. Run the Test Suite
 Ensure all existing tests pass before making any changes:
@@ -157,16 +147,19 @@ pytest tests/ -v --disable-warnings
 ```
 Or manually in two terminals:
 ```bash
-# Terminal 1: Backend FastAPI Server
-python -m uvicorn co2ops_agent.api:app --port 8080 --host 127.0.0.1
+# Terminal 1: Backend
+python co2ops_agent/server.py
 
-# Terminal 2: Frontend Web Server
-cd Frontend
-python -m http.server 8501
+# Terminal 2: Frontend (Streamlit, simplest for local dev)
+streamlit run Frontend/app.py --server.port 8501
+```
+Or with Docker (closest to the production setup, including the frontend's `X-API-Key` injection):
+```bash
+docker compose up --build
 ```
 Access the application:
-- **Landing Page**: `http://127.0.0.1:8501/`
-- **Agent Workspace**: `http://127.0.0.1:8501/workspace.html`
+- **Streamlit Workspace** (manual/`run_local.ps1` path): `http://localhost:8501`
+- **Landing Page / Agent Workspace** (Docker path): `http://127.0.0.1:8501/` and `http://127.0.0.1:8501/workspace.html`
 - **API Swagger Docs**: `http://127.0.0.1:8080/docs`
 
 ---
@@ -175,19 +168,19 @@ Access the application:
 
 To maintain the production-grade quality, security, and mathematical reliability of CO2Ops, all contributors must adhere to the following principles:
 
-### 1. Invariance of the Deterministic Safety Engine
-The safety engine in [`co2ops_agent/agents/safe_executor_agent/tools.py`](file:///d:/Projects/CO2Ops/co2ops_agent/agents/safe_executor_agent/tools.py) is mathematically proven to prevent cloud workload latency and downtime.
-- **NEVER** bypass, relax, or disable the safety thresholds (`MAX_CPU_AVG = 30.0`, `MAX_MEM_AVG = 40.0`, `MAX_CPU_P95 = 45.0`, `MAX_CPU_PEAK = 70.0`, `MAX_CPU_VOLATILITY = 15.0`).
-- The Safety Gate **must always fail closed**: missing data, unparsable data, or synthetic fallback data during live production execution must immediately trigger a `BLOCK` decision.
-- Claude / LLM reasoning must never override a mathematical safety gate block.
+### 1. Don't Weaken the Safety Gate
+The safety gate in [`co2ops_agent/agents/safe_executor_agent/tools.py`](./co2ops_agent/agents/safe_executor_agent/tools.py) (`is_safe_to_migrate`, enforced inside `change_machine_type` itself) is intentionally simple: average forecasted CPU `< 30.0%` and average forecasted memory `< 40.0%`.
+- **NEVER** relax those two thresholds, and never move the check back to "prompt-only" — it must stay enforced in code inside `change_machine_type`, not just as agent guidance, so an LLM mistake or prompt injection can't push through an unsafe resize.
+- `force=True` exists as an explicit, deliberate human override — don't have any agent set it automatically.
+- **Known gap, contributions welcome**: unlike what earlier drafts of this document implied, there is currently no peak/P95/volatility check and no fail-closed behavior on missing telemetry — see Workstream 2 above. If you add either, keep the underlying rule simple and keep it in code.
 
-### 2. Strict AWS-Native Architecture
-- CO2Ops is built exclusively on standard AWS services: **Amazon Bedrock**, **Amazon EC2**, **Amazon CloudWatch**, **AWS Pricing API**, and **Amazon S3**.
-- Do not introduce Google ADK, proprietary vendor agent frameworks, or unnecessary external cloud dependencies.
+### 2. Architecture: Google ADK + Gemini, AWS for Infrastructure
+- CO2Ops's agents are built on **Google's Agent Development Kit (ADK)**, running on **Gemini**. Infrastructure being managed (EC2, CloudWatch, Pricing API, S3, Secrets Manager) is AWS.
+- If you're touching agent/orchestration code, use ADK's own primitives (`LlmAgent`, `SequentialAgent`, `tools=[...]`, `output_key`) rather than hand-rolling a parallel mechanism — see the Readme's [Agent Orchestration Deep Dive](./Readme.md#-agent-orchestration-deep-dive).
 
-### 3. Rigorous Telemetry Provenance
-- Every piece of infrastructure data must carry provenance tracking (`provenance: 'verified_live'` vs `'demo'`, `telemetry_verified: bool`).
-- Automated resizing must never mutate instances whose metrics are flagged as synthetic or demo.
+### 3. Telemetry Honesty
+- Right now the code does **not** tag data with provenance (real vs. synthetic) anywhere in its output — that's a real gap, not a hidden feature. If you're the one who adds it, make sure it's actually visible to whoever (or whatever agent) is deciding whether to trust a "safe" verdict.
+- Prefer failing loudly over silently substituting synthetic data in any new code you add that feeds the safety gate, even though the existing forecaster currently does the latter (see Workstream 2).
 
 ### 4. Test-Driven Development (TDD)
 - Any new agent, tool, or endpoint must be accompanied by comprehensive tests under `tests/`.
@@ -210,7 +203,7 @@ The safety engine in [`co2ops_agent/agents/safe_executor_agent/tools.py`](file:/
 4. **Commit Your Changes**:
    Use descriptive, conventional commit messages:
    ```bash
-   git commit -m "feat(bedrock): add cross-region failover handler for Claude converse API"
+   git commit -m "feat(executor): add rollback on failed instance resize"
    ```
 5. **Push and Open a PR**:
    Push your branch to your GitHub fork and open a Pull Request against `main`. Fill out the PR description template detailing:
@@ -224,7 +217,7 @@ The safety engine in [`co2ops_agent/agents/safe_executor_agent/tools.py`](file:/
 
 Have questions, suggestions, or want to discuss an implementation before writing code?
 - Open a GitHub Issue for feature proposals or bug reports.
-- Refer to [`AWS_DEPLOYMENT_PLAN.md`](file:///d:/Projects/CO2Ops/AWS_DEPLOYMENT_PLAN.md) for architectural specifications.
-- Check [`Readme.md`](file:///d:/Projects/CO2Ops/Readme.md) for comprehensive system documentation.
+- Refer to [`AWS_DEPLOYMENT_PLAN.md`](./AWS_DEPLOYMENT_PLAN.md) for architectural specifications.
+- Check [`Readme.md`](./Readme.md) for comprehensive system documentation.
 
 Thank you for contributing to greener, more sustainable cloud operations! 🌍
