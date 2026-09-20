@@ -55,14 +55,14 @@
 
     /* --- Streamlit-Style Left Sidebar --- */
     .st-sidebar {
-      width: 320px;
+      width: 270px;
       flex-shrink: 0;
       background-color: var(--aws-bg-surface);
       border-right: 1px solid var(--aws-border);
       display: flex;
       flex-direction: column;
-      padding: 20px 18px;
-      gap: 14px;
+      padding: 22px 16px;
+      gap: 20px;
       overflow-y: auto;
       height: 100vh;
       position: sticky;
@@ -71,10 +71,7 @@
     }
 
     .st-sidebar::-webkit-scrollbar {
-      width: 5px;
-    }
-    .st-sidebar::-webkit-scrollbar-track {
-      background: transparent;
+      width: 4px;
     }
     .st-sidebar::-webkit-scrollbar-thumb {
       background: var(--aws-border);
@@ -85,7 +82,6 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      padding-bottom: 4px;
     }
 
     .st-nav-back {
@@ -107,11 +103,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-
-    .st-brand-text {
-      display: flex;
-      flex-direction: column;
+      padding-top: 2px;
     }
 
     .st-brand-name {
@@ -121,11 +113,6 @@
       letter-spacing: -0.01em;
     }
 
-    .st-brand-sub {
-      font-size: 0.725rem;
-      color: var(--aws-text-muted);
-    }
-
     .st-sidebar-section {
       display: flex;
       flex-direction: column;
@@ -133,71 +120,11 @@
     }
 
     .st-section-title {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--aws-text-muted);
-    }
-
-    .st-session-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.82rem;
-    }
-
-    .st-session-label {
-      color: var(--aws-text-secondary);
-      font-size: 0.8rem;
-    }
-
-    .st-code-badge {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.775rem;
-      background: var(--aws-bg-code);
-      color: var(--aws-text-primary);
-      border: 1px solid var(--aws-border);
-      padding: 3px 8px;
-      border-radius: 4px;
-    }
-
-    .st-code-badge.active-session {
-      color: var(--aws-yellow);
-      border-color: rgba(255, 153, 0, 0.4);
-      background: rgba(255, 153, 0, 0.08);
-      font-weight: 600;
-    }
-
-    /* Streamlit Secondary Button */
-    .st-btn-secondary {
-      background: var(--aws-bg-elevated);
-      border: 1px solid var(--aws-border);
-      color: var(--aws-text-primary);
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 9px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      transition: all 0.15s ease;
-      font-family: inherit;
-    }
-
-    .st-btn-secondary:hover {
-      border-color: var(--aws-yellow);
-      color: var(--aws-yellow);
-      background: rgba(255, 153, 0, 0.08);
-      box-shadow: 0 0 12px rgba(255, 153, 0, 0.15);
-    }
-
-    .st-divider {
-      height: 1px;
-      background: var(--aws-border);
-      margin: 4px 0;
     }
 
     /* Sub-Agents Swarm List */
@@ -205,7 +132,7 @@
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 4px;
       margin: 0;
       padding: 0;
     }
@@ -213,48 +140,31 @@
     .st-swarm-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 10px;
+      gap: 8px;
+      padding: 6px 8px;
       border-radius: 6px;
-      background: var(--aws-bg-elevated);
-      border: 1px solid transparent;
       font-size: 0.8rem;
+      color: var(--aws-text-secondary);
       transition: all 0.15s ease;
     }
 
-    .st-swarm-item.active-agent {
-      border-color: var(--aws-yellow);
-      background: rgba(255, 153, 0, 0.1);
-      box-shadow: 0 0 10px rgba(255, 153, 0, 0.15);
-    }
-
-    .st-swarm-meta {
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-      overflow: hidden;
+    .st-swarm-item:hover {
+      background: var(--aws-bg-elevated);
+      color: var(--aws-text-primary);
     }
 
     .st-swarm-name {
-      font-weight: 600;
-      color: #FFFFFF;
-      font-size: 0.8rem;
-    }
-
-    .st-swarm-role {
-      font-size: 0.685rem;
-      color: var(--aws-text-muted);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.775rem;
     }
 
     .st-dot-online {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--aws-green);
-      box-shadow: 0 0 6px var(--aws-green);
+      margin-left: auto;
       flex-shrink: 0;
     }
 
@@ -276,14 +186,16 @@
       cursor: pointer;
       transition: all 0.15s ease;
       font-weight: 500;
-      line-height: 1.35;
       font-family: inherit;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .st-chip-btn:hover {
       border-color: var(--aws-yellow);
       color: #FFFFFF;
-      background: rgba(255, 153, 0, 0.1);
+      background: rgba(255, 153, 0, 0.08);
     }
 
     .st-sidebar-footer {
@@ -291,29 +203,9 @@
       padding-top: 14px;
       border-top: 1px solid var(--aws-border);
       display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .st-status-badge {
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
       font-size: 0.75rem;
-      color: var(--aws-text-primary);
-    }
-
-    .st-pulse-green {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--aws-green);
-      display: inline-block;
-      box-shadow: 0 0 6px var(--aws-green);
-    }
-
-    .st-sidebar-caption {
-      font-size: 0.7rem;
       color: var(--aws-text-muted);
     }
 
@@ -328,8 +220,8 @@
     }
 
     .st-topbar {
-      height: 56px;
-      padding: 0 28px;
+      height: 52px;
+      padding: 0 32px;
       background: var(--aws-bg-surface);
       border-bottom: 1px solid var(--aws-border);
       display: flex;
@@ -340,60 +232,39 @@
       z-index: 20;
     }
 
-    .st-topbar-left {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-    }
-
     .st-topbar-title {
-      font-size: 1.05rem;
-      font-weight: 700;
+      font-size: 0.95rem;
+      font-weight: 600;
       color: #FFFFFF;
-      margin: 0;
-    }
-
-    .st-topbar-tagline {
-      font-size: 0.75rem;
-      color: var(--aws-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .st-topbar-right {
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .st-badge-aws {
-      background: rgba(255, 153, 0, 0.1);
-      border: 1px solid rgba(255, 153, 0, 0.35);
-      color: var(--aws-yellow);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 12px;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--aws-text-muted);
     }
 
     .st-link-home {
-      font-size: 0.8rem;
       color: var(--aws-text-secondary);
       text-decoration: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: all 0.15s ease;
+      transition: color 0.15s ease;
     }
 
     .st-link-home:hover {
-      color: #FFFFFF;
-      background: var(--aws-bg-elevated);
+      color: var(--aws-yellow);
     }
 
-    /* --- Centered Chat Container (Streamlit layout="centered") --- */
+    /* --- Centered Chat Container --- */
     .st-chat-container {
-      max-width: 820px;
+      max-width: 760px;
       width: 100%;
       margin: 0 auto;
-      padding: 32px 20px 140px;
+      padding: 40px 24px 140px;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -403,36 +274,34 @@
     .st-chat-stream {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
     }
 
     .st-chat-message {
       display: flex;
-      gap: 14px;
+      gap: 16px;
       width: 100%;
     }
 
     .st-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 15px;
       flex-shrink: 0;
-      user-select: none;
     }
 
     .assistant-avatar {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1.5px solid var(--aws-yellow);
-      box-shadow: 0 0 10px rgba(255, 153, 0, 0.2);
+      background: rgba(255, 153, 0, 0.12);
+      border: 1px solid var(--aws-yellow);
     }
 
     .user-avatar {
       background: var(--aws-bg-elevated);
-      border: 1.5px solid var(--aws-border);
+      border: 1px solid var(--aws-border);
     }
 
     .st-message-bubble {
@@ -442,17 +311,13 @@
       overflow: hidden;
     }
 
-    /* Assistant Message Bubble: Streamlit Card Style */
     .st-chat-message.assistant .st-message-bubble {
       background: var(--aws-bg-surface);
       border: 1px solid var(--aws-border);
-      border-left: 3.5px solid var(--aws-yellow);
       border-radius: 8px;
-      padding: 18px 22px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      padding: 20px 24px;
     }
 
-    /* User Message Bubble: Compact Right-Aligned Pill */
     .st-chat-message.user {
       flex-direction: row-reverse;
     }
@@ -460,19 +325,20 @@
     .st-chat-message.user .st-message-bubble {
       background: var(--aws-bg-elevated);
       border: 1px solid var(--aws-border-light);
-      border-radius: 18px 18px 4px 18px;
+      border-radius: 16px 16px 4px 16px;
       padding: 12px 18px;
-      max-width: 78%;
+      max-width: 80%;
       align-self: flex-end;
       color: #FFFFFF;
     }
 
     .st-message-sender {
-      font-size: 0.775rem;
-      font-weight: 700;
+      font-size: 0.75rem;
+      font-weight: 600;
       color: var(--aws-yellow);
-      margin-bottom: 8px;
-      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .st-chat-message.user .st-message-sender {
@@ -480,33 +346,28 @@
     }
 
     .st-message-content {
-      font-size: 0.925rem;
+      font-size: 0.9rem;
       line-height: 1.6;
       color: var(--aws-text-primary);
     }
 
     .st-message-content p {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .st-message-content p:last-child {
       margin-bottom: 0;
     }
 
-    .st-message-content ul.st-list, .st-message-content ul {
-      margin: 10px 0 10px 22px;
+    .st-message-content ul {
+      margin: 8px 0 12px 20px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-    }
-
-    .st-message-content li {
-      color: var(--aws-text-primary);
+      gap: 6px;
     }
 
     .st-message-content strong {
       color: #FFFFFF;
-      font-weight: 600;
     }
 
     .st-inline-code {
@@ -528,13 +389,12 @@
     }
 
     .st-code-header {
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.03);
       border-bottom: 1px solid var(--aws-border);
       padding: 6px 12px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.725rem;
+      font-size: 0.7rem;
       color: var(--aws-text-muted);
-      text-transform: uppercase;
     }
 
     .st-code-block pre {
@@ -544,113 +404,22 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.85rem;
       color: #EAEDED;
-      line-height: 1.5;
     }
 
-    .st-heading-1, .st-heading-2, .st-heading-3 {
-      color: #FFFFFF;
-      margin: 18px 0 8px;
-      font-weight: 700;
-    }
-
-    .st-heading-1 {
-      font-size: 1.25rem;
-      border-bottom: 1px solid var(--aws-border);
-      padding-bottom: 6px;
-      color: var(--aws-yellow);
-    }
-
-    .st-heading-2 {
-      font-size: 1.1rem;
-      color: var(--aws-yellow);
-    }
-
-    .st-heading-3 {
-      font-size: 0.975rem;
-      color: #FFFFFF;
-    }
-
-    .st-link {
-      color: var(--aws-yellow);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      font-weight: 500;
-    }
-
-    .st-link:hover {
-      color: var(--aws-yellow-hover);
-    }
-
-    /* Streamlit Dot-Flashing Thinking Animation */
-    .st-thinking-box {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 4px 0;
-    }
-
-    .st-thinking-text {
-      font-size: 0.85rem;
-      font-style: italic;
-      color: var(--aws-text-secondary);
-    }
-
-    .st-dot-flashing {
-      position: relative;
-      width: 8px;
-      height: 8px;
-      border-radius: 5px;
-      background-color: var(--aws-yellow);
-      color: var(--aws-yellow);
-      animation: stDotFlashing 1s infinite linear alternate;
-      animation-delay: .5s;
-      margin-left: 14px;
-      margin-right: 14px;
-    }
-
-    .st-dot-flashing::before, .st-dot-flashing::after {
-      content: '';
-      display: inline-block;
-      position: absolute;
-      top: 0;
-      width: 8px;
-      height: 8px;
-      border-radius: 5px;
-      background-color: var(--aws-yellow);
-      color: var(--aws-yellow);
-    }
-
-    .st-dot-flashing::before {
-      left: -14px;
-      animation: stDotFlashing 1s infinite alternate;
-      animation-delay: 0s;
-    }
-
-    .st-dot-flashing::after {
-      left: 14px;
-      animation: stDotFlashing 1s infinite alternate;
-      animation-delay: 1s;
-    }
-
-    @keyframes stDotFlashing {
-      0% { opacity: 0.3; transform: translateY(2px); }
-      100% { opacity: 1; transform: translateY(-2px); }
-    }
-
-    /* --- Streamlit Centered Bottom Input Bar --- */
+    /* --- Centered Bottom Input Bar --- */
     .st-bottom-bar {
       position: fixed;
       bottom: 0;
-      left: 320px;
+      left: 270px;
       right: 0;
-      padding: 16px 20px 20px;
+      padding: 16px 24px 24px;
       background: linear-gradient(to top, var(--aws-bg-canvas) 85%, transparent 100%);
       z-index: 30;
       box-sizing: border-box;
     }
 
     .st-bottom-inner {
-      max-width: 820px;
+      max-width: 760px;
       width: 100%;
       margin: 0 auto;
     }
@@ -659,16 +428,15 @@
       display: flex;
       align-items: center;
       background: var(--aws-bg-surface);
-      border: 1.5px solid var(--aws-border);
-      border-radius: 28px;
-      padding: 5px 6px 5px 20px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-      transition: all 0.2s ease;
+      border: 1px solid var(--aws-border);
+      border-radius: 24px;
+      padding: 4px 6px 4px 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.15s ease;
     }
 
     .st-input-container:focus-within {
       border-color: var(--aws-yellow);
-      box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.25), 0 6px 24px rgba(0, 0, 0, 0.5);
     }
 
     #ws-chat-input {
@@ -676,9 +444,9 @@
       background: transparent;
       border: none;
       color: #FFFFFF;
-      font-size: 0.925rem;
+      font-size: 0.9rem;
       outline: none;
-      padding: 8px 0;
+      padding: 10px 0;
       font-family: inherit;
     }
 
@@ -690,48 +458,37 @@
       background: var(--aws-yellow);
       color: #0F141C;
       border: none;
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: opacity 0.15s ease;
       flex-shrink: 0;
     }
 
     .st-send-btn:hover {
       background: var(--aws-yellow-hover);
-      transform: scale(1.05);
     }
 
     .st-send-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
-      transform: none;
     }
 
     .st-input-caption {
       text-align: center;
-      font-size: 0.725rem;
+      font-size: 0.7rem;
       color: var(--aws-text-muted);
       margin-top: 8px;
     }
 
-    /* Responsive adjustment */
     @media (max-width: 900px) {
-      .st-layout {
-        flex-direction: column;
-      }
-      .st-sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-      }
-      .st-bottom-bar {
-        left: 0;
-      }
+      .st-layout { flex-direction: column; }
+      .st-sidebar { width: 100%; height: auto; position: relative; }
+      .st-bottom-bar { left: 0; }
     }
   </style>
 </head>
@@ -741,35 +498,6 @@
     <symbol id="icon-aws-co2ops" viewBox="0 0 32 32">
       <path d="M22 10a7 7 0 0 0-13.4-2.3A7.5 7.5 0 0 0 3 15a7.5 7.5 0 0 0 7.5 7.5H23a6 6 0 0 0 0-12h-1z" fill="none" stroke="#FF9900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M14 22c0-5 3.5-9 8-9 0 5-3.5 9-8 9z" fill="#10B981" opacity="0.95"/>
-      <path d="M14 22l6-6" stroke="#0F141C" stroke-width="1.75" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="icon-ec2" viewBox="0 0 24 24">
-      <rect x="3" y="4" width="18" height="6" rx="2" fill="none" stroke="#FF9900" stroke-width="1.75"/>
-      <rect x="3" y="14" width="18" height="6" rx="2" fill="none" stroke="#FF9900" stroke-width="1.75"/>
-      <circle cx="6.5" cy="7" r="1" fill="#10B981"/>
-      <circle cx="9.5" cy="7" r="1" fill="#FF9900"/>
-      <circle cx="6.5" cy="17" r="1" fill="#10B981"/>
-      <circle cx="9.5" cy="17" r="1" fill="#FF9900"/>
-    </symbol>
-    <symbol id="icon-sagemaker" viewBox="0 0 24 24">
-      <path d="M3 20h18M3 16l4-5 4 3 5-7 5 3" fill="none" stroke="#FF9900" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="16" cy="7" r="2" fill="#FF9900"/>
-      <circle cx="21" cy="10" r="2" fill="#10B981"/>
-    </symbol>
-    <symbol id="icon-graviton" viewBox="0 0 24 24">
-      <rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="#FF9900" stroke-width="1.75"/>
-      <path d="M9 9h6v6H9z" fill="#FF9900" fill-opacity="0.25" stroke="#FF9900" stroke-width="1.2"/>
-      <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" stroke="#879596" stroke-width="1.5" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="icon-shield" viewBox="0 0 24 24">
-      <path d="M12 3l8 4v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V7l8-4z" fill="none" stroke="#10B981" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M9 12l2 2 4-4" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-    <symbol id="icon-s3-report" viewBox="0 0 24 24">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="#FF9900" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-      <polyline points="14 2 14 8 20 8" fill="none" stroke="#FF9900" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-      <line x1="16" y1="13" x2="8" y2="13" stroke="#879596" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="16" y1="17" x2="8" y2="17" stroke="#879596" stroke-width="1.5" stroke-linecap="round"/>
     </symbol>
   </svg>
 
@@ -777,150 +505,99 @@
     <!-- Streamlit-Style Left Sidebar -->
     <aside class="st-sidebar">
       <div class="st-sidebar-header">
-        <a href="./index.html" class="st-nav-back" title="Return to Landing Page">
+        <a href="./index.html" class="st-nav-back">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 13L5 8L10 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Landing Page</span>
         </a>
         <div class="st-brand">
           <svg width="24" height="24"><use href="#icon-aws-co2ops"/></svg>
-          <div class="st-brand-text">
-            <span class="st-brand-name">CO2Ops Console</span>
-            <span class="st-brand-sub">AWS FinOps & Sustainability</span>
-          </div>
+          <span class="st-brand-name">CO2Ops Console</span>
         </div>
       </div>
-
-      <!-- Session Management -->
-      <div class="st-sidebar-section">
-        <div class="st-section-title">Session Management</div>
-        <div class="st-session-row">
-          <span class="st-session-label">User ID:</span>
-          <code id="ws-user-id" class="st-code-badge">Loading...</code>
-        </div>
-        <div class="st-session-row">
-          <span class="st-session-label">Active:</span>
-          <code id="ws-session-id" class="st-code-badge active-session">Loading...</code>
-        </div>
-        <button id="ws-new-session-btn" class="st-btn-secondary" title="Reset and start new session">
-          <span>🔄 New Session</span>
-        </button>
-      </div>
-
-      <div class="st-divider"></div>
 
       <!-- AWS Agent Swarm -->
       <div class="st-sidebar-section">
-        <div class="st-section-title">AWS Agent Swarm</div>
+        <div class="st-section-title">Agents</div>
         <ul class="st-swarm-list">
           <li class="st-swarm-item" data-agent="optimization_advisor">
-            <svg width="15" height="15"><use href="#icon-ec2"/></svg>
-            <div class="st-swarm-meta">
-              <span class="st-swarm-name">@optimization_advisor</span>
-              <span class="st-swarm-role">EC2 Rightsizing & Idle Detection</span>
-            </div>
+            <span class="st-swarm-name">@optimization_advisor</span>
             <span class="st-dot-online"></span>
           </li>
           <li class="st-swarm-item" data-agent="forecasting_tool">
-            <svg width="15" height="15"><use href="#icon-sagemaker"/></svg>
-            <div class="st-swarm-meta">
-              <span class="st-swarm-name">@forecasting_tool</span>
-              <span class="st-swarm-role">SageMaker AI 7-Day Forecaster</span>
-            </div>
+            <span class="st-swarm-name">@forecasting_tool</span>
             <span class="st-dot-online"></span>
           </li>
           <li class="st-swarm-item" data-agent="impact_calculator">
-            <svg width="15" height="15"><use href="#icon-graviton"/></svg>
-            <div class="st-swarm-meta">
-              <span class="st-swarm-name">@impact_calculator</span>
-              <span class="st-swarm-role">FinOps & Graviton Carbon Diff</span>
-            </div>
+            <span class="st-swarm-name">@impact_calculator</span>
             <span class="st-dot-online"></span>
           </li>
           <li class="st-swarm-item" data-agent="safe_executor">
-            <svg width="15" height="15"><use href="#icon-shield"/></svg>
-            <div class="st-swarm-meta">
-              <span class="st-swarm-name">@safe_executor</span>
-              <span class="st-swarm-role">Zero-Downtime Safe Migrator</span>
-            </div>
+            <span class="st-swarm-name">@safe_executor</span>
             <span class="st-dot-online"></span>
           </li>
           <li class="st-swarm-item" data-agent="summary_generator">
-            <svg width="15" height="15"><use href="#icon-s3-report"/></svg>
-            <div class="st-swarm-meta">
-              <span class="st-swarm-name">@summary_generator</span>
-              <span class="st-swarm-role">S3 Executive Reports & Slides</span>
-            </div>
+            <span class="st-swarm-name">@summary_generator</span>
             <span class="st-dot-online"></span>
           </li>
         </ul>
       </div>
 
-      <div class="st-divider"></div>
-
-      <!-- Suggested Actions -->
+      <!-- Quick Inquiry Chips -->
       <div class="st-sidebar-section">
-        <div class="st-section-title">Suggested Inquiries</div>
+        <div class="st-section-title">Quick Prompts</div>
         <div class="st-chips-stack">
           <button class="st-chip-btn quick-chip" data-prompt="Audit my AWS EC2 fleet in us-east-1 for underutilized instances and carbon waste">
-            🔍 Audit EC2 in us-east-1
+            Audit EC2 in us-east-1
           </button>
           <button class="st-chip-btn quick-chip" data-prompt="Forecast 7-day CPU load for i-01a2b3c4d5e6f7g80 using Amazon SageMaker AI">
-            📈 SageMaker 7-day forecast
+            SageMaker 7-day forecast
           </button>
           <button class="st-chip-btn quick-chip" data-prompt="Compare cost and carbon emissions between m5.2xlarge and Graviton m6g.large">
-            ⚖️ Compare m5 vs Graviton m6g
+            Compare m5 vs Graviton m6g
           </button>
           <button class="st-chip-btn quick-chip" data-prompt="Execute safe migration of instance i-03c4d5e6f7g8012a to t3.medium with zero downtime">
-            🛡️ Safe migrate i-03c to t3.medium
+            Safe migrate i-03c
           </button>
           <button class="st-chip-btn quick-chip" data-prompt="Generate weekly AWS sustainability executive summary report and upload to S3">
-            📑 Generate weekly report to S3
+            Generate executive report
           </button>
         </div>
       </div>
 
       <div class="st-sidebar-footer">
-        <div class="st-status-badge">
-          <span class="st-pulse-green"></span>
-          <span>AWS Region: <strong>us-east-1</strong></span>
-        </div>
-        <div class="st-sidebar-caption">
-          SageMaker: <strong>InService</strong> • App Runner: <strong>Active</strong>
-        </div>
+        <span>Region: <strong>us-east-1</strong></span>
+        <button id="ws-new-session-btn" style="background:none; border:none; color:var(--aws-text-muted); cursor:pointer; font-size:0.75rem;" title="Reset session">Reset</button>
       </div>
     </aside>
 
-    <!-- Main Content Stream (Streamlit layout="centered") -->
+    <!-- Main Content Stream -->
     <main class="st-main">
-      <!-- Minimalist Top Navigation Header -->
       <header class="st-topbar">
-        <div class="st-topbar-left">
-          <h1 class="st-topbar-title">🌱 CO2Ops Agent Console</h1>
-          <span class="st-topbar-tagline">Autonomous AWS Sustainability & FinOps Orchestration</span>
+        <div class="st-topbar-title">
+          <svg width="18" height="18"><use href="#icon-aws-co2ops"/></svg>
+          <span>CO2Ops Assistant</span>
         </div>
         <div class="st-topbar-right">
-          <span class="st-badge-aws">AWS Region: us-east-1</span>
-          <a href="./index.html" class="st-link-home">Home</a>
+          <span>AWS Region: us-east-1</span>
+          <a href="./index.html" class="st-link-home">Exit</a>
         </div>
       </header>
 
       <!-- Centered Chat Container -->
       <div class="st-chat-container">
         <div id="ws-chat-history" class="st-chat-stream">
-          <!-- Streamlit Welcome Assistant Message -->
+          <!-- Minimalist Welcome Assistant Message -->
           <div class="st-chat-message assistant">
             <div class="st-avatar assistant-avatar" title="CO2Ops Assistant">🌱</div>
             <div class="st-message-bubble">
               <div class="st-message-sender">CO2Ops Orchestrator</div>
               <div class="st-message-content">
-                <p>Welcome to <strong>CO2Ops AWS Sustainability Console</strong>. I orchestrate specialized agents powered by Google ADK and Amazon SageMaker AI to audit, forecast, and rightsize your AWS infrastructure.</p>
-                <p>You can run autonomous queries such as:</p>
+                <p>Welcome to <strong>CO2Ops AWS Sustainability Console</strong>. How can I assist with your AWS fleet optimization today?</p>
                 <ul>
-                  <li><strong>Audit Infrastructure:</strong> <em>"Find underutilized EC2 instances in us-east-1"</em></li>
-                  <li><strong>SageMaker Forecast:</strong> <em>"Run 7-day ARIMA / SageMaker load forecast for instance i-01a2b3c4"</em></li>
-                  <li><strong>FinOps Comparison:</strong> <em>"Compare cost and carbon between m5.2xlarge and Graviton m6g.large"</em></li>
-                  <li><strong>Safe Migration:</strong> <em>"Migrate i-01a2b3c4 to Graviton m6g.large with safety validation"</em></li>
-                  <li><strong>Executive Reporting:</strong> <em>"Generate weekly executive report and presentation slides to Amazon S3"</em></li>
+                  <li><strong>Audit:</strong> "Find underutilized EC2 instances in us-east-1"</li>
+                  <li><strong>Forecast:</strong> "Run 7-day load forecast for instance i-01a2b3c4"</li>
+                  <li><strong>Compare:</strong> "Compare cost & carbon between m5.2xlarge and Graviton"</li>
+                  <li><strong>Report:</strong> "Generate weekly sustainability executive summary to S3"</li>
                 </ul>
               </div>
             </div>
@@ -928,7 +605,7 @@
         </div>
       </div>
 
-      <!-- Centered Pinned Bottom Input Bar (Streamlit style) -->
+      <!-- Centered Bottom Input Bar -->
       <footer class="st-bottom-bar">
         <div class="st-bottom-inner">
           <form id="ws-chat-form" class="st-chat-form">
@@ -936,19 +613,19 @@
               <input 
                 type="text" 
                 id="ws-chat-input" 
-                placeholder="Ask CO2Ops to audit instances, forecast demand, calculate savings, or execute safe rightsizing..." 
+                placeholder="Ask CO2Ops to audit, forecast, or rightsize AWS infrastructure..." 
                 autocomplete="off"
                 required 
               />
               <button type="submit" id="ws-send-btn" class="st-send-btn" title="Send message">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
               </button>
             </div>
           </form>
           <div class="st-input-caption">
-            AWS Cloud Sustainability • Powered by Amazon SageMaker AI & Google ADK • Region: <strong>us-east-1</strong>
+            Powered by Amazon SageMaker AI & Google ADK • Region: <strong>us-east-1</strong>
           </div>
         </div>
       </footer>
@@ -956,6 +633,6 @@
   </div>
 
   <script src="./env.js"></script>
-  <script src="./main.js?v=aws-yellow-v5"></script>
+  <script src="./main.js?v=aws-yellow-v6"></script>
 </body>
 </html>
