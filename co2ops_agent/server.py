@@ -24,6 +24,7 @@ Optional env var:
 import logging
 import os
 import sys
+import traceback
 
 # Ensure AGENTS_DIR and its parent directory are on sys.path so 'co2ops_agent' is always
 # discoverable as a package, whether running locally or inside Docker containers.
@@ -38,7 +39,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from google.adk.cli.fast_api import get_fast_api_app
-from starlette.middleware.base import BaseHTTPMiddleware
 
 load_dotenv()
 
@@ -69,33 +69,134 @@ if not API_KEY:
     )
 
 
-class ApiKeyMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Always allow browser CORS preflight requests through
-        if request.method == "OPTIONS":
-            return await call_next(request)
+def _cors_origin(request_origin: str) -> str:
+    """Return the origin to echo back in Access-Control-Allow-Origin."""
+    if "*" in ALLOWED_ORIGINS:
+        return "*"
+    if request_origin in ALLOWED_ORIGINS:
+        return request_origin
+    return ""
 
-        if request.url.path in PUBLIC_PATHS:
-            return await call_next(request)
 
-        # Enforce API key if configured
+# ---------------------------------------------------------------------------
+# Raw ASGI middleware — wraps the ENTIRE app including all inner middleware.
+# BaseHTTPMiddleware has a known bug where unhandled exceptions in call_next
+# produce bare 500 responses that bypass outer middleware. This raw ASGI
+# wrapper is immune to that: it intercepts the response at the ASGI protocol
+# level and injects CORS headers into every single response.
+# ---------------------------------------------------------------------------
+class CORSAlwaysMiddleware:
+    """Raw ASGI middleware that guarantees CORS headers on every response."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # Extract origin from request headers
+        request_headers = dict(scope.get("headers", []))
+        raw_origin = request_headers.get(b"origin", b"").decode("latin-1")
+        cors_origin = _cors_origin(raw_origin) if raw_origin else "*"
+
+        # Handle preflight
+        if scope["method"] == "OPTIONS":
+            response_headers = [
+                (b"access-control-allow-origin", cors_origin.encode()),
+                (b"access-control-allow-methods", b"GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"),
+                (b"access-control-allow-headers", b"*"),
+                (b"access-control-allow-credentials", b"true"),
+                (b"access-control-max-age", b"86400"),
+                (b"content-length", b"0"),
+            ]
+            if cors_origin != "*":
+                response_headers.append((b"vary", b"Origin"))
+            await send({"type": "http.response.start", "status": 200, "headers": response_headers})
+            await send({"type": "http.response.body", "body": b""})
+            return
+
+        # For non-preflight requests, intercept the response to inject CORS headers
+        cors_headers_to_inject = [
+            (b"access-control-allow-origin", cors_origin.encode()),
+            (b"access-control-allow-credentials", b"true"),
+        ]
+        if cors_origin != "*":
+            cors_headers_to_inject.append((b"vary", b"Origin"))
+
+        async def send_with_cors(message):
+            if message["type"] == "http.response.start":
+                # Filter out any existing CORS headers to avoid duplicates
+                existing = [
+                    (k, v) for k, v in message.get("headers", [])
+                    if k.lower() not in (
+                        b"access-control-allow-origin",
+                        b"access-control-allow-credentials",
+                    )
+                ]
+                message["headers"] = existing + cors_headers_to_inject
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_with_cors)
+        except Exception:
+            # If the inner app crashes catastrophically, still send a
+            # CORS-compliant 500 so the browser doesn't mask it as CORS.
+            logger.error("Unhandled ASGI error:\n%s", traceback.format_exc())
+            error_headers = cors_headers_to_inject + [
+                (b"content-type", b"application/json"),
+            ]
+            body = b'{"detail":"Internal server error"}'
+            error_headers.append((b"content-length", str(len(body)).encode()))
+            await send({
+                "type": "http.response.start",
+                "status": 500,
+                "headers": error_headers,
+            })
+            await send({"type": "http.response.body", "body": body})
+
+
+# ---------------------------------------------------------------------------
+# API Key enforcement as raw ASGI middleware (avoids BaseHTTPMiddleware bugs)
+# ---------------------------------------------------------------------------
+class ApiKeyMiddleware:
+    """Raw ASGI middleware for API key enforcement."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "/")
+
+        # Skip auth for public paths and OPTIONS
+        if path in PUBLIC_PATHS or scope["method"] == "OPTIONS":
+            await self.app(scope, receive, send)
+            return
+
+        # Check API key if configured
         if API_KEY:
-            provided = request.headers.get("x-api-key")
+            request_headers = dict(scope.get("headers", []))
+            provided = request_headers.get(b"x-api-key", b"").decode("latin-1")
             if provided != API_KEY:
-                logger.warning(f"Rejected request to {request.url.path} - missing/invalid API key.")
-                origin = request.headers.get("origin", "*")
-                return JSONResponse(
-                    status_code=401,
-                    content={"detail": "Missing or invalid API key."},
-                    headers={"Access-Control-Allow-Origin": origin},
-                )
+                logger.warning("Rejected request to %s - missing/invalid API key.", path)
+                body = b'{"detail":"Missing or invalid API key."}'
+                headers = [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode()),
+                ]
+                await send({"type": "http.response.start", "status": 401, "headers": headers})
+                await send({"type": "http.response.body", "body": body})
+                return
 
-        return await call_next(request)
+        await self.app(scope, receive, send)
 
 
-# Mirrors the flags the old CMD passed to `adk api_server --host 0.0.0.0 --port 8080
-# --allow_origins "*" --auto_create_session "/app"`, just built programmatically so
-# we can attach the auth middleware.
+# Build the ADK FastAPI app
 app: FastAPI = get_fast_api_app(
     agents_dir=AGENTS_DIR,
     allow_origins=ALLOWED_ORIGINS,
@@ -105,23 +206,12 @@ app: FastAPI = get_fast_api_app(
     port=PORT,
 )
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global server error on {request.url.path}: {exc}", exc_info=True)
-    origin = request.headers.get("origin", "*")
-    return JSONResponse(
-        status_code=500,
-        content={"detail": str(exc)},
-        headers={
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "*",
-            "Access-Control-Allow-Headers": "*",
-        },
-    )
-
-app.add_middleware(ApiKeyMiddleware)
+# Wrap with our raw ASGI middleware (order: CORSAlways -> ApiKey -> ADK app)
+# In ASGI wrapping, the outermost wrapper runs first.
+app = ApiKeyMiddleware(app)
+app = CORSAlwaysMiddleware(app)
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host=HOST, port=PORT)
+
