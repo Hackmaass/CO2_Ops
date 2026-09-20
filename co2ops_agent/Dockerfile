@@ -22,9 +22,5 @@ COPY . /app
 
 EXPOSE 8080
 
-# Health check to ensure API server is responding
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:8080/ || exit 1
-
 # Start ADK API server for AWS-optimized CO2Ops Agent
 CMD ["adk", "api_server", "--host", "0.0.0.0", "--port", "8080", "--allow_origins", "*", "--auto_create_session", "/app"]

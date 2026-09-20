@@ -1,6 +1,14 @@
 # Step-by-Step Guide: Deploying CO2Ops to AWS
 
-This guide walks you through deploying **CO2Ops** to AWS to get your live **HTTPS URL** and fulfill the **"SHIP IT"** hackathon rubric requirements using **Amazon ECR**, **AWS App Runner**, **Amazon SageMaker AI**, and **Amazon S3**.
+> [!TIP]
+> **🚀 Live AWS Deployment (Active & Verified)**:
+> - **Frontend (Streamlit Dashboard)**: [https://afjsiqum35.us-east-1.awsapprunner.com](https://afjsiqum35.us-east-1.awsapprunner.com)
+> - **Backend (Google ADK Agent Server)**: [https://bebw8dugmv.us-east-1.awsapprunner.com](https://bebw8dugmv.us-east-1.awsapprunner.com)
+> - **SageMaker AI Serverless Endpoint**: `co2ops-load-forecaster` (Status: `InService`, Region: `us-east-1`)
+> - **S3 Artifacts Bucket**: `s3://co2ops-sustainability-833319601729`
+> - **ECR Registry**: `833319601729.dkr.ecr.us-east-1.amazonaws.com`
+
+This guide documents the full automated deployment of **CO2Ops** to AWS fulfilling the **"SHIP IT"** hackathon rubric requirements using **Amazon ECR**, **AWS App Runner**, **Amazon SageMaker AI**, and **Amazon S3**.
 
 ---
 
