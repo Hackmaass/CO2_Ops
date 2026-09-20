@@ -1,6 +1,6 @@
 import os
 from google.adk.agents import LlmAgent
-from co2ops_agent.agents.impact_calculator_agent.agent import get_on_demand_price, get_carbon_emissions_per_hour
+from ....impact_calculator_agent.agent import get_on_demand_price, get_carbon_emissions_per_hour
 
 workload_profiler_agent = LlmAgent(
     name="workload_profiler",

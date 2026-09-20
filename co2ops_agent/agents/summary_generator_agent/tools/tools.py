@@ -11,8 +11,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-from co2ops_agent.agents.forecaster_agent.agent import generate_aws_forecast
-from co2ops_agent.agents.optimization_advisor_agent.sub_agents.infra_scout_agent.agent import DEFAULT_AWS_SERVERS
+from ...forecaster_agent.agent import generate_aws_forecast
+from ...optimization_advisor_agent.sub_agents.infra_scout_agent.agent import DEFAULT_AWS_SERVERS
 from google.adk.tools import ToolContext
 
 logger = logging.getLogger(__name__)

@@ -17,17 +17,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend application source
-COPY . /app
+# Copy backend application source into /app/co2ops_agent so that
+# both relative and absolute imports resolve correctly:
+#   - Relative:  from ..forecaster_agent.agent import ...  (works because package is 'co2ops_agent')
+#   - Absolute:  from co2ops_agent.agents.xxx import ...   (works because /app is on PYTHONPATH)
+COPY . /app/co2ops_agent/
+
+# Add /app to PYTHONPATH so `import co2ops_agent` works from any sub-module
+ENV PYTHONPATH="/app"
 
 EXPOSE 8080
 
-# Health check to ensure API server is responding
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:8080/ || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
 
-# Start the CO2Ops backend. NOTE: we do NOT use the raw `adk api_server` CLI here -
-# ADK's own docs say that server is unauthenticated and must sit behind an auth layer
-# before touching untrusted/public networks. server.py wraps the same app and requires
-# an API key (CO2OPS_API_KEY) on every request. See server.py for details.
+# Start the CO2Ops backend server from inside the package directory
+WORKDIR /app/co2ops_agent
 CMD ["python", "server.py"]

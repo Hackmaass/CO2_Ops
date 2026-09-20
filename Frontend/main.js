@@ -6,7 +6,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_BASE_URL = window.CO2OPS_API_URL || 'http://127.0.0.1:8080';
   const API_KEY = window.CO2OPS_API_KEY || '';
   const API_HEADERS = { 'Content-Type': 'application/json', 'X-API-Key': API_KEY };
-  const APP_NAME = 'co2ops_agent';
+  let APP_NAME = 'app';
+
+  // Discover registered app name from backend
+  const discoverAppName = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/list-apps`, { headers: API_HEADERS });
+      if (res.ok) {
+        const apps = await res.json();
+        if (Array.isArray(apps) && apps.length > 0) {
+          APP_NAME = apps[0];
+          console.log('Discovered active ADK backend app name:', APP_NAME);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not query /list-apps; defaulting to:', APP_NAME);
+    }
+  };
+  discoverAppName();
 
   // --- UUID Generator ---
   const generateUUID = () => {
@@ -164,11 +181,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (sessionIdEl) sessionIdEl.textContent = sessionId;
 
       try {
-        await fetch(`${API_BASE_URL}/apps/${APP_NAME}/users/${userId}/sessions/${sessionId}`, {
+        let res = await fetch(`${API_BASE_URL}/apps/${APP_NAME}/users/${userId}/sessions/${sessionId}`, {
           method: 'POST',
           headers: API_HEADERS,
           body: JSON.stringify({})
         });
+        if (res.status === 404) {
+          const altName = APP_NAME === 'co2ops_agent' ? 'app' : 'co2ops_agent';
+          const altRes = await fetch(`${API_BASE_URL}/apps/${altName}/users/${userId}/sessions/${sessionId}`, {
+            method: 'POST',
+            headers: API_HEADERS,
+            body: JSON.stringify({})
+          });
+          if (altRes.ok) {
+            APP_NAME = altName;
+          }
+        }
       } catch (err) {
         console.warn('Backend session endpoint notice:', err);
       }
@@ -198,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showThinking(guessed.label);
 
       try {
-        const res = await fetch(`${API_BASE_URL}/run`, {
+        let res = await fetch(`${API_BASE_URL}/run`, {
           method: 'POST',
           headers: API_HEADERS,
           body: JSON.stringify({
@@ -211,6 +239,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           })
         });
+
+        // If 404 Agent not found, retry once with alternate app_name ('app' vs 'co2ops_agent')
+        if (res.status === 404) {
+          const fallback = APP_NAME === 'co2ops_agent' ? 'app' : 'co2ops_agent';
+          console.warn(`Got 404 with '${APP_NAME}', retrying /run with '${fallback}'...`);
+          const retryRes = await fetch(`${API_BASE_URL}/run`, {
+            method: 'POST',
+            headers: API_HEADERS,
+            body: JSON.stringify({
+              app_name: fallback,
+              user_id: userId,
+              session_id: sessionId,
+              new_message: {
+                role: 'user',
+                parts: [{ text: messageText }]
+              }
+            })
+          });
+          if (retryRes.ok || retryRes.status !== 404) {
+            APP_NAME = fallback;
+            res = retryRes;
+          }
+        }
 
         hideThinking();
 

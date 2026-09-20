@@ -1,9 +1,9 @@
 from google.adk.tools.agent_tool import AgentTool
-from co2ops_agent.agents.optimization_advisor_agent.agent import optimization_advisor_agent
+from ..optimization_advisor_agent.agent import optimization_advisor_agent
+from ..presentation_generator_agent.agent import presentation_generator_agent
 from google.adk.agents import LlmAgent
 from .tools.tools import create_google_doc, get_weekly_data, get_forecast_information
 import os
-from co2ops_agent.agents.presentation_generator_agent.agent import presentation_generator_agent
 
 
 summary_generator_agent = LlmAgent(
@@ -102,8 +102,8 @@ Ensure you've followed all steps and called all necessary tools
     tools=[
         get_weekly_data,
         AgentTool(optimization_advisor_agent),
+        AgentTool(presentation_generator_agent),
         get_forecast_information,
         create_google_doc
     ],
-    sub_agents=[presentation_generator_agent],
 )
