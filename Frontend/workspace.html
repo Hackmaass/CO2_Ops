@@ -3,228 +3,636 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CO2Ops — Agent Workspace</title>
+  <title>CO2Ops — AWS Sustainability & FinOps Agent Console</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       AUTHENTIC STREAMLIT AWS CONSOLE (AWS Signature Yellow #FF9900)
+       Inlined for instantaneous rendering with zero caching latency
+       ========================================================================== */
+    :root {
+      --aws-yellow: #FF9900;
+      --aws-yellow-hover: #FFAC33;
+      --aws-yellow-dim: rgba(255, 153, 0, 0.15);
+      --aws-yellow-glow: rgba(255, 153, 0, 0.35);
+
+      --aws-bg-canvas: #0F141C;
+      --aws-bg-surface: #161F2E;
+      --aws-bg-elevated: #1F2C3F;
+      --aws-bg-code: #0B0F14;
+
+      --aws-border: #2A384C;
+      --aws-border-light: #34445C;
+
+      --aws-text-primary: #EAEDED;
+      --aws-text-secondary: #AAB7B8;
+      --aws-text-muted: #879596;
+      --aws-green: #10B981;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body.st-body {
+      background-color: var(--aws-bg-canvas);
+      color: var(--aws-text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .st-layout {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* --- Streamlit-Style Left Sidebar --- */
+    .st-sidebar {
+      width: 270px;
+      flex-shrink: 0;
+      background-color: var(--aws-bg-surface);
+      border-right: 1px solid var(--aws-border);
+      display: flex;
+      flex-direction: column;
+      padding: 22px 16px;
+      gap: 20px;
+      overflow-y: auto;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      box-sizing: border-box;
+    }
+
+    .st-sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .st-sidebar::-webkit-scrollbar-thumb {
+      background: var(--aws-border);
+      border-radius: 4px;
+    }
+
+    .st-sidebar-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .st-nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--aws-text-muted);
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .st-nav-back:hover {
+      color: var(--aws-yellow);
+    }
+
+    .st-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    .st-brand-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+    }
+
+    .st-sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .st-section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--aws-text-muted);
+    }
+
+    /* Sub-Agents Swarm List */
+    .st-swarm-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .st-swarm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: var(--aws-text-secondary);
+      transition: all 0.15s ease;
+    }
+
+    .st-swarm-item:hover {
+      background: var(--aws-bg-elevated);
+      color: var(--aws-text-primary);
+    }
+
+    .st-swarm-name {
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.775rem;
+    }
+
+    .st-dot-online {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--aws-green);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* Quick Inquiry Chips */
+    .st-chips-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .st-chip-btn {
+      background: var(--aws-bg-elevated);
+      border: 1px solid var(--aws-border);
+      color: var(--aws-text-secondary);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.775rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-weight: 500;
+      font-family: inherit;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .st-chip-btn:hover {
+      border-color: var(--aws-yellow);
+      color: #FFFFFF;
+      background: rgba(255, 153, 0, 0.08);
+    }
+
+    .st-sidebar-footer {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--aws-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--aws-text-muted);
+    }
+
+    /* --- Streamlit-Style Main Area --- */
+    .st-main {
+      flex: 1;
+      background: var(--aws-bg-canvas);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .st-topbar {
+      height: 52px;
+      padding: 0 32px;
+      background: var(--aws-bg-surface);
+      border-bottom: 1px solid var(--aws-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .st-topbar-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .st-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--aws-text-muted);
+    }
+
+    .st-link-home {
+      color: var(--aws-text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .st-link-home:hover {
+      color: var(--aws-yellow);
+    }
+
+    /* --- Centered Chat Container --- */
+    .st-chat-container {
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px 140px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+
+    .st-chat-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .st-chat-message {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .st-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .assistant-avatar {
+      background: rgba(255, 153, 0, 0.12);
+      border: 1px solid var(--aws-yellow);
+    }
+
+    .user-avatar {
+      background: var(--aws-bg-elevated);
+      border: 1px solid var(--aws-border);
+    }
+
+    .st-message-bubble {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+
+    .st-chat-message.assistant .st-message-bubble {
+      background: var(--aws-bg-surface);
+      border: 1px solid var(--aws-border);
+      border-radius: 8px;
+      padding: 20px 24px;
+    }
+
+    .st-chat-message.user {
+      flex-direction: row-reverse;
+    }
+
+    .st-chat-message.user .st-message-bubble {
+      background: var(--aws-bg-elevated);
+      border: 1px solid var(--aws-border-light);
+      border-radius: 16px 16px 4px 16px;
+      padding: 12px 18px;
+      max-width: 80%;
+      align-self: flex-end;
+      color: #FFFFFF;
+    }
+
+    .st-message-sender {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--aws-yellow);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .st-chat-message.user .st-message-sender {
+      display: none;
+    }
+
+    .st-message-content {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--aws-text-primary);
+    }
+
+    .st-message-content p {
+      margin-bottom: 12px;
+    }
+
+    .st-message-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .st-message-content ul {
+      margin: 8px 0 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .st-message-content strong {
+      color: #FFFFFF;
+    }
+
+    .st-inline-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85em;
+      background: var(--aws-bg-code);
+      color: var(--aws-yellow);
+      border: 1px solid var(--aws-border);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .st-code-block {
+      background: var(--aws-bg-code);
+      border: 1px solid var(--aws-border);
+      border-radius: 6px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+
+    .st-code-header {
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--aws-border);
+      padding: 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--aws-text-muted);
+    }
+
+    .st-code-block pre {
+      padding: 12px 16px;
+      margin: 0;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #EAEDED;
+    }
+
+    /* --- Centered Bottom Input Bar --- */
+    .st-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 270px;
+      right: 0;
+      padding: 16px 24px 24px;
+      background: linear-gradient(to top, var(--aws-bg-canvas) 85%, transparent 100%);
+      z-index: 30;
+      box-sizing: border-box;
+    }
+
+    .st-bottom-inner {
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .st-input-container {
+      display: flex;
+      align-items: center;
+      background: var(--aws-bg-surface);
+      border: 1px solid var(--aws-border);
+      border-radius: 24px;
+      padding: 4px 6px 4px 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.15s ease;
+    }
+
+    .st-input-container:focus-within {
+      border-color: var(--aws-yellow);
+    }
+
+    #ws-chat-input {
+      flex-grow: 1;
+      background: transparent;
+      border: none;
+      color: #FFFFFF;
+      font-size: 0.9rem;
+      outline: none;
+      padding: 10px 0;
+      font-family: inherit;
+    }
+
+    #ws-chat-input::placeholder {
+      color: var(--aws-text-muted);
+    }
+
+    .st-send-btn {
+      background: var(--aws-yellow);
+      color: #0F141C;
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .st-send-btn:hover {
+      background: var(--aws-yellow-hover);
+    }
+
+    .st-send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .st-input-caption {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--aws-text-muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .st-layout { flex-direction: column; }
+      .st-sidebar { width: 100%; height: auto; position: relative; }
+      .st-bottom-bar { left: 0; }
+    }
+  </style>
 </head>
-<body class="workspace-body">
-  <!-- SVG Symbols Definition for CO2Ops -->
+<body class="st-body">
+  <!-- Minimalist AWS & Sustainability SVG Icons -->
   <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
-    <!-- Brand Logo: Eco Cloud with Leaf -->
-    <symbol id="icon-co2ops-brand" viewBox="0 0 32 32">
-      <path d="M22 10a7 7 0 0 0-13.4-2.3A7.5 7.5 0 0 0 3 15a7.5 7.5 0 0 0 7.5 7.5H23a6 6 0 0 0 0-12h-1z" fill="none" stroke="#7856ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M14 22c0-5 3.5-9 8-9 0 5-3.5 9-8 9z" fill="#10b981" opacity="0.9"/>
-      <path d="M14 22l6-6" stroke="#07080b" stroke-width="1.5" stroke-linecap="round"/>
-    </symbol>
-
-    <!-- AWS EC2 Node -->
-    <symbol id="icon-ec2-node" viewBox="0 0 24 24">
-      <rect x="3" y="4" width="18" height="6" rx="2" fill="none" stroke="#38bdf8" stroke-width="1.75"/>
-      <rect x="3" y="14" width="18" height="6" rx="2" fill="none" stroke="#38bdf8" stroke-width="1.75"/>
-      <circle cx="6.5" cy="7" r="1" fill="#10b981"/>
-      <circle cx="9.5" cy="7" r="1" fill="#38bdf8"/>
-      <circle cx="6.5" cy="17" r="1" fill="#10b981"/>
-      <circle cx="9.5" cy="17" r="1" fill="#38bdf8"/>
-      <path d="M15 7h3M15 17h3" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
-    </symbol>
-
-    <!-- AWS Graviton ARM64 Chip -->
-    <symbol id="icon-graviton-chip" viewBox="0 0 24 24">
-      <rect x="5" y="5" width="14" height="14" rx="2.5" fill="none" stroke="#7856ff" stroke-width="1.75"/>
-      <path d="M9 9h6v6H9z" fill="#7856ff" fill-opacity="0.3" stroke="#7856ff" stroke-width="1.2"/>
-      <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
-    </symbol>
-
-    <!-- Carbon CO2 Molecule Cloud -->
-    <symbol id="icon-co2-cloud" viewBox="0 0 24 24">
-      <path d="M6.5 19a4.5 4.5 0 0 1-.5-8.97A7 7 0 0 1 19.5 9a5.5 5.5 0 0 1 1.5 10.79" fill="none" stroke="#10b981" stroke-width="1.75" stroke-linecap="round"/>
-      <path d="M9 14.5a2 2 0 1 0 0 3 2 2 0 0 0 0-3zm6-1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" fill="#10b981"/>
-    </symbol>
-
-    <!-- 7-Day ARIMA Predictive Curve -->
-    <symbol id="icon-arima-chart" viewBox="0 0 24 24">
-      <path d="M3 20h18M3 16l4-5 4 3 5-7 5 3" fill="none" stroke="#38bdf8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M16 7l5 3v5l-5-2z" fill="#38bdf8" fill-opacity="0.2"/>
-    </symbol>
-
-    <!-- Zero-Downtime Safe Shield -->
-    <symbol id="icon-safe-shield" viewBox="0 0 24 24">
-      <path d="M12 3l8 4v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V7l8-4z" fill="none" stroke="#10b981" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M9 12l2 2 4-4" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-
-    <!-- Spark AI -->
-    <symbol id="icon-copilot-spark" viewBox="0 0 24 24">
-      <path d="M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z" fill="url(#spark-grad)"/>
-      <defs>
-        <linearGradient id="spark-grad" x1="3" y1="2" x2="21" y2="20" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#7856ff"/>
-          <stop offset="1" stop-color="#10b981"/>
-        </linearGradient>
-      </defs>
+    <symbol id="icon-aws-co2ops" viewBox="0 0 32 32">
+      <path d="M22 10a7 7 0 0 0-13.4-2.3A7.5 7.5 0 0 0 3 15a7.5 7.5 0 0 0 7.5 7.5H23a6 6 0 0 0 0-12h-1z" fill="none" stroke="#FF9900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M14 22c0-5 3.5-9 8-9 0 5-3.5 9-8 9z" fill="#10B981" opacity="0.95"/>
     </symbol>
   </svg>
 
-  <div class="workspace-layout">
-    <!-- Workspace Sidebar -->
-    <aside class="workspace-sidebar">
-      <div class="workspace-sidebar-header">
-        <a href="./index.html" class="workspace-back-link" title="Return to Landing Page">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 13L5 8L10 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="st-layout">
+    <!-- Streamlit-Style Left Sidebar -->
+    <aside class="st-sidebar">
+      <div class="st-sidebar-header">
+        <a href="./index.html" class="st-nav-back">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 13L5 8L10 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Landing Page</span>
         </a>
-        <div class="workspace-brand">
-          <svg width="28" height="28"><use href="#icon-co2ops-brand"/></svg>
-          <span class="brand-title">CO2Ops Workspace</span>
+        <div class="st-brand">
+          <svg width="24" height="24"><use href="#icon-aws-co2ops"/></svg>
+          <span class="st-brand-name">CO2Ops Console</span>
         </div>
       </div>
 
-      <!-- Session Management -->
-      <div class="session-card">
-        <div class="session-card-title">Session Management</div>
-        <div class="session-info-row">
-          <span class="session-label">User ID:</span>
-          <code id="ws-user-id" class="session-val">Loading...</code>
-        </div>
-        <div class="session-info-row">
-          <span class="session-label">Session:</span>
-          <code id="ws-session-id" class="session-val">Loading...</code>
-        </div>
-        <button id="ws-new-session-btn" class="btn-new-session">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span>Create New Session</span>
-        </button>
-      </div>
-
-      <!-- Active Sub-Agents Status -->
-      <div class="agent-swarm-card">
-        <div class="session-card-title">AWS Sub-Agent Swarm</div>
-        <ul class="swarm-list">
-          <li class="swarm-item online" data-agent="optimization_advisor">
-            <svg width="16" height="16"><use href="#icon-ec2-node"/></svg>
-            <span>@optimization_advisor</span>
-            <span class="badge-dot"></span>
+      <!-- AWS Agent Swarm -->
+      <div class="st-sidebar-section">
+        <div class="st-section-title">Agents</div>
+        <ul class="st-swarm-list">
+          <li class="st-swarm-item" data-agent="optimization_advisor">
+            <span class="st-swarm-name">@optimization_advisor</span>
+            <span class="st-dot-online"></span>
           </li>
-          <li class="swarm-item online" data-agent="forecasting_tool">
-            <svg width="16" height="16"><use href="#icon-arima-chart"/></svg>
-            <span>@forecasting_tool</span>
-            <span class="badge-dot"></span>
+          <li class="st-swarm-item" data-agent="forecasting_tool">
+            <span class="st-swarm-name">@forecasting_tool</span>
+            <span class="st-dot-online"></span>
           </li>
-          <li class="swarm-item online" data-agent="impact_calculator">
-            <svg width="16" height="16"><use href="#icon-co2-cloud"/></svg>
-            <span>@impact_calculator</span>
-            <span class="badge-dot"></span>
+          <li class="st-swarm-item" data-agent="impact_calculator">
+            <span class="st-swarm-name">@impact_calculator</span>
+            <span class="st-dot-online"></span>
           </li>
-          <li class="swarm-item online" data-agent="safe_executor">
-            <svg width="16" height="16"><use href="#icon-safe-shield"/></svg>
-            <span>@safe_executor</span>
-            <span class="badge-dot"></span>
+          <li class="st-swarm-item" data-agent="safe_executor">
+            <span class="st-swarm-name">@safe_executor</span>
+            <span class="st-dot-online"></span>
           </li>
-          <li class="swarm-item online" data-agent="summary_generator">
-            <svg width="16" height="16"><use href="#icon-graviton-chip"/></svg>
-            <span>@summary_generator</span>
-            <span class="badge-dot"></span>
+          <li class="st-swarm-item" data-agent="summary_generator">
+            <span class="st-swarm-name">@summary_generator</span>
+            <span class="st-dot-online"></span>
           </li>
         </ul>
       </div>
 
-      <!-- Quick Action Prompts -->
-      <div class="quick-prompts-card">
-        <div class="session-card-title">Suggested Actions</div>
-        <div class="quick-chips">
-          <button class="quick-chip" data-prompt="Audit my AWS EC2 fleet in us-east-1 for underutilized instances and carbon waste">
-            🔍 Audit EC2 in us-east-1
+      <!-- Quick Inquiry Chips -->
+      <div class="st-sidebar-section">
+        <div class="st-section-title">Quick Prompts</div>
+        <div class="st-chips-stack">
+          <button class="st-chip-btn quick-chip" data-prompt="Audit my AWS EC2 fleet in us-east-1 for underutilized instances and carbon waste">
+            Audit EC2 in us-east-1
           </button>
-          <button class="quick-chip" data-prompt="Forecast 7-day CPU load for i-01a2b3c4d5e6f7g80 using ARIMA">
-            📈 7-Day ARIMA forecast
+          <button class="st-chip-btn quick-chip" data-prompt="Forecast 7-day CPU load for i-01a2b3c4d5e6f7g80 using Amazon SageMaker AI">
+            SageMaker 7-day forecast
           </button>
-          <button class="quick-chip" data-prompt="Compare cost and carbon emissions between m5.2xlarge and Graviton m6g.large">
-            ⚖️ Compare m5.2xlarge vs m6g.large
+          <button class="st-chip-btn quick-chip" data-prompt="Compare cost and carbon emissions between m5.2xlarge and Graviton m6g.large">
+            Compare m5 vs Graviton m6g
           </button>
-          <button class="quick-chip" data-prompt="Execute safe migration of instance i-03c4d5e6f7g8012a to t3.medium with zero downtime">
-            🛡️ Safe migrate i-03c to t3.medium
+          <button class="st-chip-btn quick-chip" data-prompt="Execute safe migration of instance i-03c4d5e6f7g8012a to t3.medium with zero downtime">
+            Safe migrate i-03c
           </button>
-          <button class="quick-chip" data-prompt="Generate weekly AWS sustainability executive summary report and upload to S3">
-            📑 Generate weekly summary to S3
+          <button class="st-chip-btn quick-chip" data-prompt="Generate weekly AWS sustainability executive summary report and upload to S3">
+            Generate executive report
           </button>
         </div>
       </div>
 
-      <div class="workspace-sidebar-footer">
-        <div class="backend-pill">
-          <span class="status-indicator live"></span>
-          <span>ADK Backend: Port 8080</span>
-        </div>
+      <div class="st-sidebar-footer">
+        <span>Region: <strong>us-east-1</strong></span>
+        <button id="ws-new-session-btn" style="background:none; border:none; color:var(--aws-text-muted); cursor:pointer; font-size:0.75rem;" title="Reset session">Reset</button>
       </div>
     </aside>
 
-    <!-- Main Chat Workspace -->
-    <main class="workspace-main">
-      <!-- Top Bar -->
-      <header class="workspace-topbar">
-        <div class="topbar-left">
-          <h1 class="topbar-title">🌱 CO2Ops Agent Console</h1>
-          <span class="topbar-sub">Sustainable AWS Operations • Multi-Agent Orchestrator</span>
+    <!-- Main Content Stream -->
+    <main class="st-main">
+      <header class="st-topbar">
+        <div class="st-topbar-title">
+          <svg width="18" height="18"><use href="#icon-aws-co2ops"/></svg>
+          <span>CO2Ops Assistant</span>
         </div>
-        <div class="topbar-right">
-          <div class="badge-region">Region: <strong>us-east-1 (N. Virginia)</strong></div>
-          <a href="./index.html" class="btn-ghost-nav">Home</a>
+        <div class="st-topbar-right">
+          <span>AWS Region: us-east-1</span>
+          <a href="./index.html" class="st-link-home">Exit</a>
         </div>
       </header>
 
-      <!-- Chat History -->
-      <div id="ws-chat-history" class="chat-history-container">
-        <!-- Welcome Message -->
-        <div class="chat-message assistant-msg">
-          <div class="msg-avatar">
-            <svg width="20" height="20"><use href="#icon-copilot-spark"/></svg>
-          </div>
-          <div class="msg-content">
-            <div class="msg-sender">CO2Ops Orchestrator</div>
-            <div class="msg-text">
-              <p>Welcome to the <strong>CO2Ops Workspace</strong>. I orchestrate specialized agents to continuously audit, forecast, and rightsize your AWS infrastructure.</p>
-              <p>You can ask me to:</p>
-              <ul>
-                <li><strong>Audit infrastructure:</strong> <em>"Find underutilized EC2 instances in us-east-1"</em></li>
-                <li><strong>Forecast load:</strong> <em>"Run 7-day ARIMA forecast for instance i-01a2b3c4"</em></li>
-                <li><strong>FinOps calculation:</strong> <em>"Compare cost and carbon between m5.2xlarge and Graviton m6g.large"</em></li>
-                <li><strong>Safe migration:</strong> <em>"Migrate i-01a2b3c4 to Graviton m6g.large with safety validation"</em></li>
-                <li><strong>Reporting:</strong> <em>"Generate weekly executive report and presentation slides to S3"</em></li>
-              </ul>
+      <!-- Centered Chat Container -->
+      <div class="st-chat-container">
+        <div id="ws-chat-history" class="st-chat-stream">
+          <!-- Minimalist Welcome Assistant Message -->
+          <div class="st-chat-message assistant">
+            <div class="st-avatar assistant-avatar" title="CO2Ops Assistant">🌱</div>
+            <div class="st-message-bubble">
+              <div class="st-message-sender">CO2Ops Orchestrator</div>
+              <div class="st-message-content">
+                <p>Welcome to <strong>CO2Ops AWS Sustainability Console</strong>. How can I assist with your AWS fleet optimization today?</p>
+                <ul>
+                  <li><strong>Audit:</strong> "Find underutilized EC2 instances in us-east-1"</li>
+                  <li><strong>Forecast:</strong> "Run 7-day load forecast for instance i-01a2b3c4"</li>
+                  <li><strong>Compare:</strong> "Compare cost & carbon between m5.2xlarge and Graviton"</li>
+                  <li><strong>Report:</strong> "Generate weekly sustainability executive summary to S3"</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Chat Input Form -->
-      <footer class="workspace-input-bar">
-        <form id="ws-chat-form" class="chat-form">
-          <div class="input-wrapper">
-            <input 
-              type="text" 
-              id="ws-chat-input" 
-              placeholder="Ask CO2Ops to audit instances, forecast demand, calculate savings, or execute safe rightsizing..." 
-              autocomplete="off"
-              required 
-            />
-            <button type="submit" id="ws-send-btn" class="send-btn" title="Send message">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
+      <!-- Centered Bottom Input Bar -->
+      <footer class="st-bottom-bar">
+        <div class="st-bottom-inner">
+          <form id="ws-chat-form" class="st-chat-form">
+            <div class="st-input-container">
+              <input 
+                type="text" 
+                id="ws-chat-input" 
+                placeholder="Ask CO2Ops to audit, forecast, or rightsize AWS infrastructure..." 
+                autocomplete="off"
+                required 
+              />
+              <button type="submit" id="ws-send-btn" class="st-send-btn" title="Send message">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+          <div class="st-input-caption">
+            Powered by Amazon SageMaker AI & Google ADK • Region: <strong>us-east-1</strong>
           </div>
-        </form>
-        <div class="input-caption">
-          Powered by AWS Multi-Agent Architecture • Google ADK • Climatiq Emissions API • Zero-Downtime Safe Execution
         </div>
       </footer>
     </main>
   </div>
 
   <script src="./env.js"></script>
-  <script src="./main.js"></script>
+  <script src="./main.js?v=aws-yellow-v6"></script>
 </body>
 </html>

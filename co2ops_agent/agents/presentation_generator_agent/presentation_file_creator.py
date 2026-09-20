@@ -8,7 +8,7 @@ from google.adk.tools import ToolContext
 
 import json
 import os
-from co2ops_agent.secrets_access_manager import access_secret
+from ...secrets_access_manager import access_secret
 
 def get_shape_by_name(slide, target_name):
     for shape in slide.shapes:

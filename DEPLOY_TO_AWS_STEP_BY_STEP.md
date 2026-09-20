@@ -2,11 +2,13 @@
 
 > [!TIP]
 > **🚀 Live AWS Deployment (Active & Verified)**:
-> - **Frontend (Streamlit Dashboard)**: [https://afjsiqum35.us-east-1.awsapprunner.com](https://afjsiqum35.us-east-1.awsapprunner.com)
+> - **Frontend (Interactive Streamlit with Native WebSockets)**: [http://13.220.11.164](http://13.220.11.164) (or [http://ec2-13-220-11-164.compute-1.amazonaws.com](http://ec2-13-220-11-164.compute-1.amazonaws.com))
 > - **Backend (Google ADK Agent Server)**: [https://bebw8dugmv.us-east-1.awsapprunner.com](https://bebw8dugmv.us-east-1.awsapprunner.com)
 > - **SageMaker AI Serverless Endpoint**: `co2ops-load-forecaster` (Status: `InService`, Region: `us-east-1`)
 > - **S3 Artifacts Bucket**: `s3://co2ops-sustainability-833319601729`
 > - **ECR Registry**: `833319601729.dkr.ecr.us-east-1.amazonaws.com`
+>
+> *(Note on App Runner: AWS App Runner's edge proxy does not support HTTP `Upgrade: websocket` requests required by Streamlit's `_stcore/stream`. The backend runs on App Runner, while the interactive frontend runs containerized on EC2 with native WebSocket connectivity).*
 
 This guide documents the full automated deployment of **CO2Ops** to AWS fulfilling the **"SHIP IT"** hackathon rubric requirements using **Amazon ECR**, **AWS App Runner**, **Amazon SageMaker AI**, and **Amazon S3**.
 

@@ -2,7 +2,7 @@ import os
 import time
 import logging
 from typing import List, Dict, Any, Union
-from co2ops_agent.agents.forecaster_agent.agent import generate_aws_forecast
+from ..forecaster_agent.agent import generate_aws_forecast
 
 logger = logging.getLogger(__name__)
 
