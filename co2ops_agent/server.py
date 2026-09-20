@@ -71,6 +71,10 @@ if not API_KEY:
 
 class ApiKeyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        # Always allow browser CORS preflight requests through
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         if request.url.path in PUBLIC_PATHS:
             return await call_next(request)
 
@@ -79,7 +83,12 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
             provided = request.headers.get("x-api-key")
             if provided != API_KEY:
                 logger.warning(f"Rejected request to {request.url.path} - missing/invalid API key.")
-                return JSONResponse(status_code=401, content={"detail": "Missing or invalid API key."})
+                origin = request.headers.get("origin", "*")
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Missing or invalid API key."},
+                    headers={"Access-Control-Allow-Origin": origin},
+                )
 
         return await call_next(request)
 
@@ -95,6 +104,21 @@ app: FastAPI = get_fast_api_app(
     host=HOST,
     port=PORT,
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global server error on {request.url.path}: {exc}", exc_info=True)
+    origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
 
 app.add_middleware(ApiKeyMiddleware)
 

@@ -8,7 +8,7 @@ import os
 
 summary_generator_agent = LlmAgent(
     name="weekly_summary_agent",
-    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
     description="Generates a weekly AWS sustainability report with embedded charts and metrics.",
     instruction="""
 You are the Weekly Summary Agent for CO2Ops AWS Sustainability. Your task is to generate a comprehensive weekly executive report as a Markdown document with embedded charts and metrics.

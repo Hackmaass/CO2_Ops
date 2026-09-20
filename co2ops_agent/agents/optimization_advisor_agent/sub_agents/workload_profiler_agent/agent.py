@@ -4,7 +4,7 @@ from ....impact_calculator_agent.agent import get_on_demand_price, get_carbon_em
 
 workload_profiler_agent = LlmAgent(
     name="workload_profiler",
-    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
     description="Analyzes AWS EC2 infrastructure data to detect optimization opportunities, underutilized resources, and carbon/cost inefficiencies.",
     instruction="""
     You are a smart AWS workload profiling agent that analyzes AWS EC2 infrastructure metrics to detect optimization opportunities.

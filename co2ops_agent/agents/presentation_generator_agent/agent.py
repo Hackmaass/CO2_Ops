@@ -7,7 +7,7 @@ from .presentation_file_creator import create_presentation
 
 presentation_generator_agent = LlmAgent(
     name="weekly_slide_agent",
-    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
     description="Generates a weekly Google Slides deck with embedded insights and chart links.",
     instruction="""
   You are the Slide Generator Agent for CO2Ops.
